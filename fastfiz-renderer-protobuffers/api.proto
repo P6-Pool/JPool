@@ -1,0 +1,51 @@
+syntax = "proto2";
+import "google/protobuf/empty.proto";
+package protobuf;
+option java_multiple_files = true;
+option java_package = "org.example.protobuf";
+option java_outer_classname = "ApiProtos";
+
+service JPoolAPI {
+  rpc ShowShots (ShowShotsRequest) returns (google.protobuf.Empty) {}
+}
+
+message ShowShotsRequest {
+  required TableState tableState = 1;
+  repeated Shot shots = 2;
+}
+
+message TableState {
+  repeated Ball balls = 1;
+}
+
+message Ball {
+  required Point pos = 1;
+  required int32 number = 2;
+  required int32 state = 3;
+}
+
+message Point {
+  required double x = 1;
+  required double y = 2;
+}
+
+message Shot {
+  required ShotType type = 1;
+  optional Shot next = 2;
+  optional Shot branch = 3;
+  optional Point posB1 = 4;
+  optional Point ghostBall = 5;
+  optional Point leftMost = 6;
+  optional Point rightMost = 7;
+  optional int32 b1 = 8;
+  optional int32 b2 = 9;
+}
+
+enum ShotType {
+  CUE_STRIKE = 0;
+  POCKET = 1;
+  RAIL = 2;
+  STRIKE = 3;
+  KISS = 4;
+  BALL_BOTH = 5;
+}
