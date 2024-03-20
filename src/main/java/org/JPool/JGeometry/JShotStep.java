@@ -1,5 +1,6 @@
 package org.JPool.JGeometry;
 
+import org.JPool.FastFiz.Ball;
 import org.JPool.FastFiz.Pocket;
 
 public class JShotStep {
@@ -24,8 +25,8 @@ public class JShotStep {
                 null,
                 null,
                 pocket.center,
-                pocket.leftMost,
-                pocket.rightMost,
+                pocket.leftMost.add(pocket.rightMost.sub(pocket.leftMost).norm().mult(Ball.radius)),
+                pocket.rightMost.add(pocket.leftMost.sub(pocket.rightMost).norm().mult(Ball.radius)),
                 -1,
                 -1
         );

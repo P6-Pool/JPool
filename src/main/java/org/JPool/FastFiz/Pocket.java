@@ -8,8 +8,8 @@ public class Pocket {
     public Vector2d center;
 
     public Pocket(Vector2d leftMost, Vector2d rightMost) {
-        this.leftMost = leftMost.add(rightMost.sub(leftMost).norm().mult(Ball.radius));
-        this.rightMost = rightMost.add(leftMost.sub(rightMost).norm().mult(Ball.radius));
-        this.center = leftMost.add(rightMost.sub(leftMost).div(2));
+        this.leftMost = leftMost;
+        this.rightMost = rightMost;
+        this.center = leftMost.getCenterVector(rightMost);
     }
 }

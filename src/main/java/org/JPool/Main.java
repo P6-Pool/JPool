@@ -30,11 +30,11 @@ public class Main
                 new ArrayList<>(){{
                     add(new Ball(0, 1, new Vector2d(0.28, 0.28)));
                     add(new Ball(1, 1, new Vector2d(0.2, 0.2)));
-                    add(new Ball(2, 1, new Vector2d(0.04, 0.1)));
+                    add(new Ball(2, 1, new Vector2d(0.1, 0.04)));
                 }}
         );
 
-        client.showShots(ShotTree.generateShotTree(FourBallState, 5, TableState.playerPattern.SOLID), FourBallState);
+        client.showShots(ShotTree.generateShotTree(TwoBallState, 5, TableState.playerPattern.SOLID), TwoBallState);
 
     }
 }

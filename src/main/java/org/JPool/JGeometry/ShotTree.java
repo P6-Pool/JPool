@@ -57,8 +57,8 @@ public class ShotTree {
                 continue;
             }
 
-            Vector2d adjustedLeftMostTarget = PathFinder.adjustLeftMostTarget(ball, tableState.balls, next, 2);
-            Vector2d adjustedRightMostTarget = PathFinder.adjustRightMostTarget(ball, tableState.balls, next, 2);
+            Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(ball, next.leftMost, true, tableState.balls, next, 2);
+            Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(ball, next.rightMost, false, tableState.balls, next, 2);
 
             if (adjustedLeftMostTarget == null || adjustedRightMostTarget == null) {
                 continue;
@@ -70,7 +70,6 @@ public class ShotTree {
             if (diffLeftMostAfter.cross(diffRightMostAfter) > 0) {
                 continue;
             }
-
 
             next.leftMost = adjustedLeftMostTarget;
             next.rightMost = adjustedRightMostTarget;
@@ -84,8 +83,9 @@ public class ShotTree {
             Vector2d newRightMost = ball.pos.add(diffNewRightMost);
             JShotStep.JShotStepType newType = ball.number == 0 ? JShotStep.JShotStepType.CUE_STRIKE : JShotStep.JShotStepType.BALL_BOTH;
             Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
+            int newB1 = newType == JShotStep.JShotStepType.CUE_STRIKE ? 0 : -1;
 
-            JShotStep newStepTree = new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, next.b2, ball.number);
+            JShotStep newStepTree = new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, newB1, ball.number);
 
             newStepTrees.add(newStepTree);
         }

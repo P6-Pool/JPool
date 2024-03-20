@@ -52,189 +52,76 @@ public class PathFinder {
         return projectedGhostBallPoses;
     }
 
-    public static ArrayList<Vector2d> getKissTargetPoses(Ball ball, Ball target) {
+    public static Vector2d getKissTargetPos(Ball ball, Ball target, boolean isLeft) {
         Vector2d diff = target.pos.sub(ball.pos);
         double hyp = diff.mag();
-        double adj = ball.radius * 2;
+        double adj = Ball.radius * 2;
 
         double angle = Math.acos(adj / hyp);
+        angle *= isLeft ? -1 : 1;
 
-        Vector2d leftKiss = diff.norm().rotateClockwise(-angle).mult(adj);
-        Vector2d rightKiss = diff.norm().rotateClockwise(angle).mult(adj);
-
-        return new ArrayList<>() {{
-            add(ball.pos.add(leftKiss));
-            add(ball.pos.add(rightKiss));
-        }};
+        return diff.norm().rotateClockwise(angle).mult(adj / 2);
     }
 
-    public static Vector2d adjustLeftMostTarget(Ball mainBall, ArrayList<Ball> balls, JShotStep step, int depth) {
-        step = step.copy();
-
-        if (mainBall.number == 0) {
-            int b1 = step.b1;
-            if (step.b1 == 2) {
-                System.out.println("jeee");
-            }
-        }
-
-        Vector2d adjustedTargetPos = step.leftMost;
-        Vector2d leftMostOffset = step.leftMost.sub(mainBall.pos).norm().rotateClockwise(-Math.PI / 2).mult(Ball.radius);
-        Vector2d lineSegStartPoint = mainBall.pos.add(leftMostOffset);
-        Vector2d lineSegEndPoint = step.leftMost.add(leftMostOffset);
-
-        for (Ball ball : balls) {
-            if (ball.number == mainBall.number || ball.state == 0 || ball.number == step.b1) {
-                continue;
-            }
-
-            if (!isLineSegmentAndBallColliding(lineSegStartPoint, lineSegEndPoint, ball.pos, Ball.radius)) {
-                continue;
-            }
-
-            double c = ball.pos.sub(mainBall.pos).mag();
-            double a = Ball.radius * 2;
-            double angleAC = Math.acos(a / c);
-
-            Vector2d ballTangentOffset = mainBall.pos.sub(ball.pos).norm().rotateClockwise(-angleAC).mult(Ball.radius);
-            Vector2d adjustedLinePointQ = ball.pos.add(ballTangentOffset);
-            Vector2d adjustedLinePointP = mainBall.pos.sub(ballTangentOffset);
-
-            if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
-                Vector2d adjustedLineDiff = adjustedLinePointQ.sub(adjustedLinePointP);
-                double a1 = adjustedLineDiff.y / adjustedLineDiff.x;
-                double b1 = adjustedLinePointQ.y - a1 * adjustedLinePointQ.x;
-
-                Vector2d leftRightLineDiff = step.rightMost.sub(step.leftMost);
-                double a2 = leftRightLineDiff.y / leftRightLineDiff.x;
-                double b2 = step.rightMost.y - a2 * step.rightMost.x;
-
-                double x = (b2 - b1) / (a1 - a2);
-                double y = a1 * x + b1;
-
-                Vector2d adjustedLeftMostLeftMost = new Vector2d(x, y);
-
-                adjustedTargetPos = adjustedLeftMostLeftMost.add(step.rightMost.sub(step.leftMost).norm().mult(Ball.radius));
-
-                if (depth > 0) {
-                    step.leftMost = adjustedTargetPos;
-                    return adjustLeftMostTarget(mainBall, balls, step, depth - 1);
-                }
-            } else {
-                if (isLineAndBallColliding(adjustedLinePointP, adjustedLinePointQ, step.leftMost, Ball.radius) ||
-                        isLineAndBallColliding(adjustedLinePointP, adjustedLinePointQ, step.posB1, Ball.radius)) {
-                    ArrayList<Vector2d> intersections = getLineCircleIntersections(
-                            mainBall.pos,
-                            mainBall.pos.add(adjustedLinePointQ.sub(adjustedLinePointP)),
-                            step.posB1,
-                            Ball.radius * 2
-                    );
-                    System.out.println(intersections);
-                    adjustedTargetPos = intersections.get(intersections.indexOf(Collections.min(intersections)));
-                    if (depth > 0) {
-                        step.leftMost = adjustedTargetPos;
-                        return adjustLeftMostTarget(mainBall, balls, step, depth - 1);
-                    }
-                }
-                else {
-                    return null;
-                }
-
-            }
-        }
-
-        return adjustedTargetPos;
-    }
-
-    public static Vector2d adjustRightMostTarget(Ball mainBall, ArrayList<Ball> balls, JShotStep step, int depth) {
-        step = step.copy();
-
-        if (mainBall.number == 1) {
-            int b1 = step.b1;
-            if (step.b1 == -1) {
-                System.out.println("jeee");
-            }
-        }
-
-        Vector2d adjustedTargetPos = step.rightMost;
-        Vector2d rightMostOffset = step.rightMost.sub(mainBall.pos).norm().rotateClockwise(Math.PI / 2).mult(Ball.radius);
+    public static Vector2d adjustTarget(Ball mainBall, Vector2d target, boolean isLeft, ArrayList<Ball> balls, JShotStep step, int depth) {
+        double angle = isLeft ? -Math.PI / 2 : Math.PI / 2;
+        Vector2d rightMostOffset = target.sub(mainBall.pos).norm().rotateClockwise(angle).mult(Ball.radius);
         Vector2d lineSegStartPoint = mainBall.pos.add(rightMostOffset);
-        Vector2d lineSegEndPoint = step.rightMost.add(rightMostOffset);
+        Vector2d lineSegEndPoint = target.add(rightMostOffset);
+
+        Ball intersectingBall = null;
 
         for (Ball ball : balls) {
             if (ball.number == mainBall.number || ball.state == 0 || ball.number == step.b1) {
                 continue;
             }
-
-            if (!isLineSegmentAndBallColliding(lineSegStartPoint, lineSegEndPoint, ball.pos, Ball.radius)) {
-                continue;
-            }
-
-            double c = ball.pos.sub(mainBall.pos).mag();
-            double a = Ball.radius * 2;
-            double angleAC = Math.acos(a / c);
-
-            Vector2d ballTangentOffset = mainBall.pos.sub(ball.pos).norm().rotateClockwise(angleAC).mult(Ball.radius);
-            Vector2d adjustedLinePointQ = ball.pos.add(ballTangentOffset);
-            Vector2d adjustedLinePointP = mainBall.pos.sub(ballTangentOffset);
-
-            if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
-                Vector2d adjustedLineDiff = adjustedLinePointQ.sub(adjustedLinePointP);
-                double a1 = adjustedLineDiff.y / adjustedLineDiff.x;
-                double b1 = adjustedLinePointQ.y - a1 * adjustedLinePointQ.x;
-
-                Vector2d leftRightLineDiff = step.leftMost.sub(step.rightMost);
-                double a2 = leftRightLineDiff.y / leftRightLineDiff.x;
-                double b2 = step.leftMost.y - a2 * step.leftMost.x;
-
-                double x = (b2 - b1) / (a1 - a2);
-                double y = a1 * x + b1;
-
-                Vector2d adjustedRightMostRightMost = new Vector2d(x, y);
-
-                adjustedTargetPos = adjustedRightMostRightMost.add(step.leftMost.sub(step.rightMost).norm().mult(Ball.radius));
-
-                if (depth > 0) {
-                    step.rightMost = adjustedTargetPos;
-                    return adjustRightMostTarget(mainBall, balls, step, depth - 1);
-                }
-            } else {
-                if (isLineAndBallColliding(adjustedLinePointP, adjustedLinePointQ, step.rightMost, Ball.radius) ||
-                        isLineAndBallColliding(adjustedLinePointP, adjustedLinePointQ, step.posB1, Ball.radius)) {
-                    ArrayList<Vector2d> intersections = getLineCircleIntersections(
-                            mainBall.pos,
-                            mainBall.pos.add(adjustedLinePointQ.sub(adjustedLinePointP)),
-                            step.posB1,
-                            Ball.radius * 2
-                    );
-                    System.out.println(intersections);
-                    adjustedTargetPos = intersections.get(intersections.indexOf(Collections.min(intersections)));
-                    if (depth > 0) {
-                        step.rightMost = adjustedTargetPos;
-                        return adjustRightMostTarget(mainBall, balls, step, depth - 1);
-                    }
-                }
-                else {
-                    return null;
-                }
-
+            if (isLineSegmentAndBallColliding(lineSegStartPoint, lineSegEndPoint, ball.pos, Ball.radius)) {
+                intersectingBall = ball;
+                break;
             }
         }
 
-        return adjustedTargetPos;
+        if (intersectingBall == null) {
+            return target;
+        }
+
+        Vector2d kiss = getKissTargetPos(mainBall, intersectingBall, isLeft);
+        Vector2d adjustedLinePointQ = intersectingBall.pos.sub(kiss);
+        Vector2d adjustedLinePointP = mainBall.pos.add(kiss);
+        Vector2d adjustedTarget;
+
+        if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
+            Vector2d adjustedLineDiff = adjustedLinePointQ.sub(adjustedLinePointP);
+            Vector2d otherTarget = isLeft ? step.rightMost : step.leftMost;
+            Vector2d leftRightLineDiff = otherTarget.sub(target);
+            Vector2d adjustedEdge = getLineLineIntersection(adjustedLinePointQ, adjustedLineDiff, target, leftRightLineDiff);
+            adjustedTarget = adjustedEdge.add(leftRightLineDiff.norm().mult(Ball.radius));
+        } else {
+            ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBall.pos, mainBall.pos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
+            if (intersections.size() < 2) {
+                return null;
+            }
+            adjustedTarget = intersections.get(intersections.indexOf(Collections.min(intersections)));
+        }
+
+        if (depth > 0) {
+            return adjustTarget(mainBall, adjustedTarget, isLeft, balls, step, depth - 1);
+        }
+
+        return adjustedTarget;
     }
 
-    public static boolean isLineAndBallColliding(Vector2d linePointP, Vector2d linePointQ, Vector2d ballOrigin, double ballRadius) {
-        // https://www.baeldung.com/cs/circle-line-segment-collision-detection
+    public static Vector2d getLineLineIntersection(Vector2d lPoint, Vector2d lLineVec, Vector2d mPoint, Vector2d mLineVec) {
+        double a1 = lLineVec.y / lLineVec.x;
+        double b1 = lPoint.y - a1 * lPoint.x;
 
-        Vector2d pq = linePointQ.sub(linePointP);
-        Vector2d op = linePointP.sub(ballOrigin);
-        Vector2d oq = linePointQ.sub(ballOrigin);
+        double a2 = mLineVec.y / mLineVec.x;
+        double b2 = mPoint.y - a2 * mPoint.x;
 
-        double triangleArea = Math.abs(op.cross(oq)) / 2;
-        double minDist = 2 * triangleArea / pq.mag();
+        double x = (b2 - b1) / (a1 - a2);
+        double y = a1 * x + b1;
 
-        return minDist <= ballRadius;
+        return new Vector2d(x, y);
     }
 
     public static boolean isLineSegmentAndBallColliding(Vector2d lineStart, Vector2d lineEnd, Vector2d ballOrigin, double ballRadius) {
