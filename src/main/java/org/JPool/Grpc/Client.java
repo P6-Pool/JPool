@@ -50,7 +50,8 @@ public class Client {
         Shot.Builder builder = Shot.newBuilder()
                 .setType(convertJShotStepTypeToSerShotType(shot.type))
                 .setB1(shot.b1)
-                .setB2(shot.b2);
+                .setB2(shot.b2)
+                .setId(shot.id);
 
         if (shot.next != null) builder.setNext(convertShotToSerShot(shot.next));
         if (shot.branch != null) builder.setBranch(convertShotToSerShot(shot.branch));

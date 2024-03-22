@@ -1,6 +1,7 @@
 package org.JPool.JGeometry;
 
 import org.JPool.FastFiz.Ball;
+import org.JPool.FastFiz.Pocket;
 import org.JPool.FastFiz.TableState;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class ShotTree {
 
         for (JShotStep shot : undoneShots) {
             newShots.addAll(generateBallBoths(tableState, shot, playerPattern));
+            newShots.addAll(generateKissBalls(tableState, shot, playerPattern));
         }
 
         doneShots.addAll(getDoneShots(newShots));
@@ -53,8 +55,43 @@ public class ShotTree {
             Vector2d diffLeftMostBefore = next.leftMost.sub(ball.pos);
             Vector2d diffRightMostBefore = next.rightMost.sub(ball.pos);
 
-            if (diffLeftMostBefore.cross(diffRightMostBefore) > 0) {
+            //TODO when next type is KISS there are cases where leftmost and rightmost crosses that should be legal
+            if (diffLeftMostBefore.determinant(diffRightMostBefore) > 0) {
                 continue;
+            }
+
+//            if (ball.number == 0 && next.b2 == 2 && next.next.b2 == 1 && next.type == JShotStep.JShotStepType.KISS_LEFT && next.next.next.type == JShotStep.JShotStepType.POCKET) {
+//                if (next.next.next.leftMost.equals(new Vector2d(0.05757616965811463, 0.020205576272405597))) {
+//                    System.out.println("asd");
+//                }
+//            }
+
+            if (next.id == 108) {
+                System.out.println("asadd");
+            }
+
+            if (next.type == JShotStep.JShotStepType.KISS_LEFT) {
+                Vector2d spanLeftMost = next.leftMost.sub(next.next.rightMost);
+                Vector2d spanRightMost = next.rightMost.sub(next.posB1);
+                Vector2d intersection = PathFinder.getLineLineIntersection(spanLeftMost, next.leftMost, spanRightMost, next.posB1);
+                if (intersection == null) {
+                    continue;
+                }
+                Vector2d point = ball.pos.sub(intersection);
+                if (!PathFinder.isPointInSpan(spanLeftMost, spanRightMost, point)) {
+                    continue;
+                }
+            } else if (next.type == JShotStep.JShotStepType.KISS_RIGHT) {
+                Vector2d spanLeftMost = next.leftMost.sub(next.posB1);
+                Vector2d spanRightMost = next.rightMost.sub(next.next.leftMost);
+                Vector2d intersection = PathFinder.getLineLineIntersection(spanLeftMost, next.rightMost, spanRightMost, next.posB1);
+                if (intersection == null) {
+                    continue;
+                }
+                Vector2d point = ball.pos.sub(intersection);
+                if (!PathFinder.isPointInSpan(spanLeftMost, spanRightMost, point)) {
+                    continue;
+                }
             }
 
             Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(ball, next.leftMost, true, tableState.balls, next, 2);
@@ -67,7 +104,7 @@ public class ShotTree {
             Vector2d diffLeftMostAfter = adjustedLeftMostTarget.sub(ball.pos);
             Vector2d diffRightMostAfter = adjustedRightMostTarget.sub(ball.pos);
 
-            if (diffLeftMostAfter.cross(diffRightMostAfter) > 0) {
+            if (diffLeftMostAfter.determinant(diffRightMostAfter) > 0) {
                 continue;
             }
 
@@ -76,8 +113,8 @@ public class ShotTree {
             next.ghostBallPos = getGhostBall(next.type, next.leftMost, next.rightMost, next.posB1);
             next.b1 = ball.number;
 
-            Vector2d diffNewLeftMost = diffRightMostAfter.norm().mult(-Ball.radius * 2);
-            Vector2d diffNewRightMost = diffLeftMostAfter.norm().mult(-Ball.radius * 2);
+            Vector2d diffNewLeftMost = diffRightMostAfter.normalize().mult(-Ball.radius * 2);
+            Vector2d diffNewRightMost = diffLeftMostAfter.normalize().mult(-Ball.radius * 2);
 
             Vector2d newLeftMost = ball.pos.add(diffNewLeftMost);
             Vector2d newRightMost = ball.pos.add(diffNewRightMost);
@@ -91,6 +128,39 @@ public class ShotTree {
         }
 
         return newStepTrees;
+    }
+
+    private static ArrayList<JShotStep> generateKissBalls(TableState tableState, JShotStep targetStep, TableState.playerPattern playerPattern) {
+        ArrayList<JShotStep> newStepTrees = new ArrayList<>();
+
+        for (Ball ball : tableState.balls) {
+
+            if (invalidBallBothBall(targetStep, tableState, ball, playerPattern)) {
+                continue;
+            }
+
+            JShotStep step1 = generateKissBall(tableState, ball, targetStep, true);
+            JShotStep step2 = generateKissBall(tableState, ball, targetStep, false);
+
+//            if (step1 != null) {
+//            } if (step2 != null) {
+//            }
+            newStepTrees.add(step1);
+            newStepTrees.add(step2);
+        }
+
+        return newStepTrees;
+    }
+
+    private static JShotStep generateKissBall(TableState tableState, Ball ball, JShotStep targetStep, boolean isLeft) {
+        JShotStep next = targetStep.copy();
+
+        Vector2d newLeftMost = ball.pos.add(PathFinder.getKissTargetPos(next.rightMost, ball.pos, !isLeft).mult(2));
+        Vector2d newRightMost = ball.pos.add(PathFinder.getKissTargetPos(next.leftMost, ball.pos, !isLeft).mult(2));
+        JShotStep.JShotStepType newType = isLeft ? JShotStep.JShotStepType.KISS_LEFT : JShotStep.JShotStepType.KISS_RIGHT;
+        Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
+
+        return new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, -1, ball.number);
     }
 
     private static ArrayList<JShotStep> getDoneShots(ArrayList<JShotStep> shots) {
@@ -129,11 +199,11 @@ public class ShotTree {
     }
 
     private static Vector2d getGhostBall(JShotStep.JShotStepType type, Vector2d leftMost, Vector2d rightMost, Vector2d ballPos) {
-        Vector2d centerVector = leftMost.getCenterVector(rightMost);
+        Vector2d centerVector = leftMost.center(rightMost);
         if (type == JShotStep.JShotStepType.POCKET || type == JShotStep.JShotStepType.RAIL) {
             return centerVector;
         } else {
-            Vector2d offset = centerVector.sub(ballPos).norm().mult(2 * Ball.radius);
+            Vector2d offset = centerVector.sub(ballPos).normalize().mult(2 * Ball.radius);
             return ballPos.add(offset);
         }
     }

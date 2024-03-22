@@ -4,9 +4,7 @@ import org.JPool.FastFiz.Ball;
 import org.JPool.FastFiz.TableState;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.function.DoubleFunction;
 
 public class PathFinder {
     public static ArrayList<Vector2d> getTableIdxes(int d) {
@@ -52,20 +50,20 @@ public class PathFinder {
         return projectedGhostBallPoses;
     }
 
-    public static Vector2d getKissTargetPos(Ball ball, Ball target, boolean isLeft) {
-        Vector2d diff = target.pos.sub(ball.pos);
+    public static Vector2d getKissTargetPos(Vector2d ballPos, Vector2d targetPos, boolean isLeft) {
+        Vector2d diff = ballPos.sub(targetPos);
         double hyp = diff.mag();
         double adj = Ball.radius * 2;
 
         double angle = Math.acos(adj / hyp);
         angle *= isLeft ? -1 : 1;
 
-        return diff.norm().rotateClockwise(angle).mult(adj / 2);
+        return diff.normalize().rotateClockwise(angle).mult(adj / 2);
     }
 
     public static Vector2d adjustTarget(Ball mainBall, Vector2d target, boolean isLeft, ArrayList<Ball> balls, JShotStep step, int depth) {
         double angle = isLeft ? -Math.PI / 2 : Math.PI / 2;
-        Vector2d rightMostOffset = target.sub(mainBall.pos).norm().rotateClockwise(angle).mult(Ball.radius);
+        Vector2d rightMostOffset = target.sub(mainBall.pos).normalize().rotateClockwise(angle).mult(Ball.radius);
         Vector2d lineSegStartPoint = mainBall.pos.add(rightMostOffset);
         Vector2d lineSegEndPoint = target.add(rightMostOffset);
 
@@ -85,7 +83,7 @@ public class PathFinder {
             return target;
         }
 
-        Vector2d kiss = getKissTargetPos(mainBall, intersectingBall, isLeft);
+        Vector2d kiss = getKissTargetPos(mainBall.pos, intersectingBall.pos, !isLeft);
         Vector2d adjustedLinePointQ = intersectingBall.pos.sub(kiss);
         Vector2d adjustedLinePointP = mainBall.pos.add(kiss);
         Vector2d adjustedTarget;
@@ -95,7 +93,7 @@ public class PathFinder {
             Vector2d otherTarget = isLeft ? step.rightMost : step.leftMost;
             Vector2d leftRightLineDiff = otherTarget.sub(target);
             Vector2d adjustedEdge = getLineLineIntersection(adjustedLinePointQ, adjustedLineDiff, target, leftRightLineDiff);
-            adjustedTarget = adjustedEdge.add(leftRightLineDiff.norm().mult(Ball.radius));
+            adjustedTarget = adjustedEdge.add(leftRightLineDiff.normalize().mult(Ball.radius));
         } else {
             ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBall.pos, mainBall.pos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
             if (intersections.size() < 2) {
@@ -112,14 +110,33 @@ public class PathFinder {
     }
 
     public static Vector2d getLineLineIntersection(Vector2d lPoint, Vector2d lLineVec, Vector2d mPoint, Vector2d mLineVec) {
-        double a1 = lLineVec.y / lLineVec.x;
-        double b1 = lPoint.y - a1 * lPoint.x;
+        double lLineSlope = lLineVec.y / lLineVec.x;
+        double mLineSlope = mLineVec.y / mLineVec.x;
 
-        double a2 = mLineVec.y / mLineVec.x;
-        double b2 = mPoint.y - a2 * mPoint.x;
+        // Handle case when lines are parallel
+        if (lLineSlope == mLineSlope) {
+            return null;
+        }
 
-        double x = (b2 - b1) / (a1 - a2);
-        double y = a1 * x + b1;
+        // Check if either line is vertical
+        if (Double.isInfinite(lLineSlope)) {
+            double x = lPoint.x;
+            double y = mLineSlope * x + mPoint.y - mLineSlope * mPoint.x;
+            return new Vector2d(x, y);
+        }
+
+        if (Double.isInfinite(mLineSlope)) {
+            double x = mPoint.x;
+            double y = lLineSlope * x + lPoint.y - lLineSlope * lPoint.x;
+            return new Vector2d(x, y);
+        }
+
+        // For non-vertical lines, calculate intersection point
+        double lLineIntercept = lPoint.y - lLineSlope * lPoint.x;
+        double mLineIntercept = mPoint.y - mLineSlope * mPoint.x;
+
+        double x = (mLineIntercept - lLineIntercept) / (lLineSlope - mLineSlope);
+        double y = lLineSlope * x + lLineIntercept;
 
         return new Vector2d(x, y);
     }
@@ -136,7 +153,7 @@ public class PathFinder {
         double maxDist = Math.max(os.mag(), oe.mag());
 
         if (os.dot(es) > 0 && oe.dot(se) > 0) {
-            double triangleArea = Math.abs(os.cross(oe)) / 2;
+            double triangleArea = Math.abs(os.determinant(oe)) / 2;
             minDist = 2 * triangleArea / se.mag();
         } else {
             minDist = Math.min(os.mag(), oe.mag());
@@ -167,5 +184,15 @@ public class PathFinder {
         }
 
         return intersections;
+    }
+
+    public static boolean isPointInSpan(Vector2d leftMost, Vector2d rightMost, Vector2d point) {
+        Vector2d perpLeft = leftMost.normal();
+        Vector2d perpRight = rightMost.normal();
+
+        Vector2d leftMostToPoint = point.sub(leftMost);
+        Vector2d rightMostToPoint = point.sub(rightMost);
+
+        return perpLeft.dot(leftMostToPoint) < 0 && perpRight.dot(rightMostToPoint) < 0;
     }
 }

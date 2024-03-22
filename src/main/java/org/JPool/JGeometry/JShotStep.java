@@ -4,7 +4,8 @@ import org.JPool.FastFiz.Ball;
 import org.JPool.FastFiz.Pocket;
 
 public class JShotStep {
-    public enum JShotStepType {CUE_STRIKE, POCKET, RAIL, STRIKE, KISS, BALL_BOTH}
+    public static int idCounter = 0;
+    public enum JShotStepType {CUE_STRIKE, POCKET, RAIL, STRIKE, KISS_LEFT, KISS_RIGHT, BALL_BOTH}
 
     public JShotStep(JShotStepType type, JShotStep next, JShotStep branch, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2) {
         this.type = type;
@@ -16,6 +17,7 @@ public class JShotStep {
         this.rightMost = rightMost;
         this.b1 = b1;
         this.b2 = b2;
+        this.id = idCounter++;
     }
 
     public static JShotStep JShotPocketStep(Pocket pocket) {
@@ -25,8 +27,8 @@ public class JShotStep {
                 null,
                 null,
                 pocket.center,
-                pocket.leftMost.add(pocket.rightMost.sub(pocket.leftMost).norm().mult(Ball.radius)),
-                pocket.rightMost.add(pocket.leftMost.sub(pocket.rightMost).norm().mult(Ball.radius)),
+                pocket.leftMost.add(pocket.rightMost.sub(pocket.leftMost).normalize().mult(Ball.radius)),
+                pocket.rightMost.add(pocket.leftMost.sub(pocket.rightMost).normalize().mult(Ball.radius)),
                 -1,
                 -1
         );
@@ -69,4 +71,5 @@ public class JShotStep {
     public Vector2d rightMost;
     public int b1;
     public int b2;
+    public int id;
 }

@@ -1,5 +1,7 @@
 package org.JPool.JGeometry;
 
+import java.util.Locale;
+
 public class Vector2d implements Comparable<Vector2d>{
     public double x, y;
 
@@ -28,15 +30,17 @@ public class Vector2d implements Comparable<Vector2d>{
         return new Vector2d(x / val, y / val);
     }
 
-    public Vector2d norm() {
+    public Vector2d normalize() {
         return div(mag());
     }
-
+    public Vector2d normal() {
+        return new Vector2d(y, -x);
+    }
     public double dot(Vector2d other) {
         return x * other.x + y * other.y;
     }
 
-    public double cross(Vector2d other) {
+    public double determinant(Vector2d other) {
         return x * other.y - y * other.x;
     }
 
@@ -50,7 +54,7 @@ public class Vector2d implements Comparable<Vector2d>{
         return new Vector2d(newX, newY);
     }
 
-    public Vector2d getCenterVector(Vector2d other) {
+    public Vector2d center(Vector2d other) {
         return add(other.sub(this).div(2));
     }
 
@@ -60,7 +64,7 @@ public class Vector2d implements Comparable<Vector2d>{
 
     @Override
     public String toString() {
-        return String.format("(%.3f, %.3f)", x, y);
+        return String.format(Locale.US, "(%.3f, %.3f)", x, y);
     }
 
     @Override

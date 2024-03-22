@@ -10,6 +10,6 @@ public class Pocket {
     public Pocket(Vector2d leftMost, Vector2d rightMost) {
         this.leftMost = leftMost;
         this.rightMost = rightMost;
-        this.center = leftMost.getCenterVector(rightMost);
+        this.center = leftMost.center(rightMost);
     }
 }

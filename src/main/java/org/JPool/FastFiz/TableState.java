@@ -3,6 +3,7 @@ package org.JPool.FastFiz;
 import org.JPool.JGeometry.Vector2d;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class TableState {
     public final ArrayList<Ball> balls;
@@ -45,4 +46,31 @@ public class TableState {
                 new Vector2d(0.0, length - diagonalWidth),
                 new Vector2d(diagonalWidth, length));
     }
+
+    public static TableState randomTableState(int numBalls) {
+        Random rand = new Random(0);
+        ArrayList<Ball> balls = new ArrayList<>();
+        for (int i = 0; i < numBalls + 1; i++) {
+            balls.add(new Ball(i, 1, new Vector2d(Ball.radius + rand.nextDouble()*(TableState.width - Ball.radius * 2), TableState.length / 18 * (i + 1))));
+        }
+        return new TableState(balls);
+    };
+
+    public static TableState linedTableState(int numBalls) {
+        ArrayList<Ball> balls = new ArrayList<>();
+        for (int i = 0; i < numBalls + 1; i++) {
+            balls.add(new Ball(i, 1, new Vector2d(TableState.width / 2, TableState.length / 18 * (i + 1))));
+        }
+        return new TableState(balls);
+    };
+
+    public static TableState noClearPathTableState() {
+        return new TableState(
+                new ArrayList<>(){{
+                    add(new Ball(0, 1, new Vector2d(0.28, 0.28)));
+                    add(new Ball(1, 1, new Vector2d(0.2, 0.2)));
+                    add(new Ball(2, 1, new Vector2d(0.1, 0.04)));
+                }}
+        );
+    };
 }
