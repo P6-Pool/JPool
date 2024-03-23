@@ -11,6 +11,7 @@ public class ShotTree {
         ArrayList<JShotStep> doneShots = new ArrayList<>();
         ArrayList<JShotStep> pocketWays = generatePocketingWays(tableState);
         generateShotTreeHelper(tableState, doneShots, pocketWays, depth, playerPattern);
+        JShotStep.idCounter = 0;
         return doneShots;
     }
 
