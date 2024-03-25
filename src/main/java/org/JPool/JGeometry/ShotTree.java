@@ -32,7 +32,7 @@ public class ShotTree {
 
         for (JShotStep shot : undoneShots) {
             newShots.addAll(generateBallBoths(tableState, shot, playerPattern));
-            newShots.addAll(generateKissBalls(tableState, shot, playerPattern));
+//            newShots.addAll(generateKissBalls(tableState, shot, playerPattern));
         }
 
         doneShots.addAll(getDoneShots(newShots));
@@ -61,38 +61,12 @@ public class ShotTree {
                 continue;
             }
 
-//            if (ball.number == 0 && next.b2 == 2 && next.next.b2 == 1 && next.type == JShotStep.JShotStepType.KISS_LEFT && next.next.next.type == JShotStep.JShotStepType.POCKET) {
-//                if (next.next.next.leftMost.equals(new Vector2d(0.05757616965811463, 0.020205576272405597))) {
-//                    System.out.println("asd");
-//                }
-//            }
-
-            if (next.id == 108) {
+            if (next.id == 9) {
                 System.out.println("asadd");
             }
 
-            if (next.type == JShotStep.JShotStepType.KISS_LEFT) {
-                Vector2d spanLeftMost = next.leftMost.sub(next.next.rightMost);
-                Vector2d spanRightMost = next.rightMost.sub(next.posB1);
-                Vector2d intersection = PathFinder.getLineLineIntersection(spanLeftMost, next.leftMost, spanRightMost, next.posB1);
-                if (intersection == null) {
-                    continue;
-                }
-                Vector2d point = ball.pos.sub(intersection);
-                if (!PathFinder.isPointInSpan(spanLeftMost, spanRightMost, point)) {
-                    continue;
-                }
-            } else if (next.type == JShotStep.JShotStepType.KISS_RIGHT) {
-                Vector2d spanLeftMost = next.leftMost.sub(next.posB1);
-                Vector2d spanRightMost = next.rightMost.sub(next.next.leftMost);
-                Vector2d intersection = PathFinder.getLineLineIntersection(spanLeftMost, next.rightMost, spanRightMost, next.posB1);
-                if (intersection == null) {
-                    continue;
-                }
-                Vector2d point = ball.pos.sub(intersection);
-                if (!PathFinder.isPointInSpan(spanLeftMost, spanRightMost, point)) {
-                    continue;
-                }
+            if (!PathFinder.isKissShotReachable(next, ball.pos)) {
+                continue;
             }
 
             Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(ball, next.leftMost, true, tableState.balls, next, 2);
@@ -143,11 +117,12 @@ public class ShotTree {
             JShotStep step1 = generateKissBall(tableState, ball, targetStep, true);
             JShotStep step2 = generateKissBall(tableState, ball, targetStep, false);
 
-//            if (step1 != null) {
-//            } if (step2 != null) {
-//            }
-            newStepTrees.add(step1);
-            newStepTrees.add(step2);
+            if (step1 != null) {
+                newStepTrees.add(step1);
+            }
+            if (step2 != null) {
+                newStepTrees.add(step2);
+            }
         }
 
         return newStepTrees;
@@ -156,10 +131,18 @@ public class ShotTree {
     private static JShotStep generateKissBall(TableState tableState, Ball ball, JShotStep targetStep, boolean isLeft) {
         JShotStep next = targetStep.copy();
 
+        if (next.id == 686) {
+            System.out.println("asdasd");
+        }
+
         Vector2d newLeftMost = ball.pos.add(PathFinder.getKissTargetPos(next.rightMost, ball.pos, !isLeft).mult(2));
         Vector2d newRightMost = ball.pos.add(PathFinder.getKissTargetPos(next.leftMost, ball.pos, !isLeft).mult(2));
         JShotStep.JShotStepType newType = isLeft ? JShotStep.JShotStepType.KISS_LEFT : JShotStep.JShotStepType.KISS_RIGHT;
         Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
+
+        if (!PathFinder.isKissShotReachable(next, newGhostBallPos)) {
+            return null;
+        }
 
         return new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, -1, ball.number);
     }

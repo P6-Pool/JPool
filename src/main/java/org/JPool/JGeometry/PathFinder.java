@@ -2,6 +2,7 @@ package org.JPool.JGeometry;
 
 import org.JPool.FastFiz.Ball;
 import org.JPool.FastFiz.TableState;
+import org.JPool.Main;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,8 +51,8 @@ public class PathFinder {
         return projectedGhostBallPoses;
     }
 
-    public static Vector2d getKissTargetPos(Vector2d ballPos, Vector2d targetPos, boolean isLeft) {
-        Vector2d diff = ballPos.sub(targetPos);
+    public static Vector2d getKissTargetPos(Vector2d ballToBeShotPos, Vector2d ballToBeHitPos, boolean isLeft) {
+        Vector2d diff = ballToBeShotPos.sub(ballToBeHitPos);
         double hyp = diff.mag();
         double adj = Ball.radius * 2;
 
@@ -63,9 +64,9 @@ public class PathFinder {
 
     public static Vector2d adjustTarget(Ball mainBall, Vector2d target, boolean isLeft, ArrayList<Ball> balls, JShotStep step, int depth) {
         double angle = isLeft ? -Math.PI / 2 : Math.PI / 2;
-        Vector2d rightMostOffset = target.sub(mainBall.pos).normalize().rotateClockwise(angle).mult(Ball.radius);
-        Vector2d lineSegStartPoint = mainBall.pos.add(rightMostOffset);
-        Vector2d lineSegEndPoint = target.add(rightMostOffset);
+        Vector2d perpOffset = target.sub(mainBall.pos).normalize().rotateClockwise(angle).mult(Ball.radius);
+        Vector2d lineSegStartPoint = mainBall.pos.add(perpOffset);
+        Vector2d lineSegEndPoint = target.add(perpOffset);
 
         Ball intersectingBall = null;
 
@@ -83,9 +84,9 @@ public class PathFinder {
             return target;
         }
 
-        Vector2d kiss = getKissTargetPos(mainBall.pos, intersectingBall.pos, !isLeft);
-        Vector2d adjustedLinePointQ = intersectingBall.pos.sub(kiss);
-        Vector2d adjustedLinePointP = mainBall.pos.add(kiss);
+        Vector2d kiss = getKissTargetPos(mainBall.pos, intersectingBall.pos, isLeft);
+        Vector2d adjustedLinePointQ = intersectingBall.pos.add(kiss);
+        Vector2d adjustedLinePointP = mainBall.pos.sub(kiss);
         Vector2d adjustedTarget;
 
         if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
@@ -106,7 +107,32 @@ public class PathFinder {
             return adjustTarget(mainBall, adjustedTarget, isLeft, balls, step, depth - 1);
         }
 
+        //TODO add intersection check
+
         return adjustedTarget;
+    }
+
+    public static boolean isKissShotReachable(JShotStep next, Vector2d ballPos) {
+        if (next.type == JShotStep.JShotStepType.KISS_LEFT) {
+            Vector2d spanLeftMost = next.leftMost.sub(next.next.rightMost);
+            Vector2d spanRightMost = next.rightMost.sub(next.posB1);
+            Vector2d intersection = PathFinder.getLineLineIntersection(next.leftMost, spanLeftMost, next.rightMost, spanRightMost);
+            if (intersection == null) {
+                return false;
+            }
+            Vector2d point = ballPos.sub(intersection);
+            return PathFinder.isPointInSpan(spanLeftMost, spanRightMost, point);
+        } else if (next.type == JShotStep.JShotStepType.KISS_RIGHT) {
+            Vector2d spanLeftMost =  next.rightMost.sub(next.next.leftMost);
+            Vector2d spanRightMost = next.leftMost.sub(next.posB1);
+            Vector2d intersection = PathFinder.getLineLineIntersection(next.leftMost, spanLeftMost, next.rightMost, spanRightMost);
+            if (intersection == null) {
+                return false;
+            }
+            Vector2d point = ballPos.sub(intersection);
+            return PathFinder.isPointInSpan(spanLeftMost, spanRightMost, point);
+        }
+        return true;
     }
 
     public static Vector2d getLineLineIntersection(Vector2d lPoint, Vector2d lLineVec, Vector2d mPoint, Vector2d mLineVec) {
@@ -188,6 +214,8 @@ public class PathFinder {
 
     public static boolean isPointInSpan(Vector2d leftMost, Vector2d rightMost, Vector2d point) {
         Vector2d perpLeft = leftMost.normal();
+        perpLeft = perpLeft.rotateClockwise(Math.PI);
+
         Vector2d perpRight = rightMost.normal();
 
         Vector2d leftMostToPoint = point.sub(leftMost);
