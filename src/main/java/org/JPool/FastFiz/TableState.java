@@ -48,7 +48,7 @@ public class TableState {
     }
 
     public static TableState randomTableState(int numBalls) {
-        Random rand = new Random(0);
+        Random rand = new Random(numBalls);
         ArrayList<Ball> balls = new ArrayList<>();
         for (int i = 0; i < numBalls + 1; i++) {
             balls.add(new Ball(i, 1, new Vector2d(Ball.radius + rand.nextDouble()*(TableState.width - Ball.radius * 2), TableState.length / 18 * (i + 1))));

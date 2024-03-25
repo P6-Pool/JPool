@@ -32,7 +32,7 @@ public class ShotTree {
 
         for (JShotStep shot : undoneShots) {
             newShots.addAll(generateBallBoths(tableState, shot, playerPattern));
-//            newShots.addAll(generateKissBalls(tableState, shot, playerPattern));
+            newShots.addAll(generateKissBalls(tableState, shot, playerPattern));
         }
 
         doneShots.addAll(getDoneShots(newShots));
@@ -61,7 +61,7 @@ public class ShotTree {
                 continue;
             }
 
-            if (next.id == 9) {
+            if (next.id == 23656) {
                 System.out.println("asadd");
             }
 
@@ -131,7 +131,7 @@ public class ShotTree {
     private static JShotStep generateKissBall(TableState tableState, Ball ball, JShotStep targetStep, boolean isLeft) {
         JShotStep next = targetStep.copy();
 
-        if (next.id == 686) {
+        if (next.id == 23656) {
             System.out.println("asdasd");
         }
 

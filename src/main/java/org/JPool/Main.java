@@ -13,6 +13,6 @@ public class Main
         Client clientGG = new Client("localhost", 50052);
         TableState activeTableState = TableState.randomTableState(8);
 //        clientP5.showShots(ShotTree.generateShotTree(activeTableState, 3, TableState.playerPattern.SOLID), activeTableState);
-        clientGG.showShots(ShotTree.generateShotTree(activeTableState, 3, TableState.playerPattern.SOLID), activeTableState);
+        clientGG.showShots(ShotTree.generateShotTree(activeTableState, 4, TableState.playerPattern.SOLID), activeTableState);
     }
 }

@@ -213,14 +213,11 @@ public class PathFinder {
     }
 
     public static boolean isPointInSpan(Vector2d leftMost, Vector2d rightMost, Vector2d point) {
-        Vector2d perpLeft = leftMost.normal();
-        perpLeft = perpLeft.rotateClockwise(Math.PI);
+        double angle = leftMost.angleBetween(rightMost);
+        Vector2d bisector = leftMost.add(rightMost).div(leftMost.add(rightMost).mag());
 
-        Vector2d perpRight = rightMost.normal();
+        double angleToPoint = point.angleBetween(bisector);
 
-        Vector2d leftMostToPoint = point.sub(leftMost);
-        Vector2d rightMostToPoint = point.sub(rightMost);
-
-        return perpLeft.dot(leftMostToPoint) < 0 && perpRight.dot(rightMostToPoint) < 0;
+        return angleToPoint <= angle / 2;
     }
 }
