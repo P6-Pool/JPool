@@ -5,6 +5,7 @@ import org.JPool.FastFiz.Pocket;
 import org.JPool.FastFiz.TableState;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ShotTree {
     static public ArrayList<JShotStep> generateShotTree(TableState tableState, int depth, TableState.playerPattern playerPattern) {
@@ -69,8 +70,8 @@ public class ShotTree {
                 continue;
             }
 
-            Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(ball, next.leftMost, true, tableState.balls, next, 2);
-            Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(ball, next.rightMost, false, tableState.balls, next, 2);
+            Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, next.leftMost, true, tableState.balls, next, 2);
+            Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, next.rightMost, false, tableState.balls, next, 2);
 
             if (adjustedLeftMostTarget == null || adjustedRightMostTarget == null) {
                 continue;
@@ -96,6 +97,11 @@ public class ShotTree {
             JShotStep.JShotStepType newType = ball.number == 0 ? JShotStep.JShotStepType.CUE_STRIKE : JShotStep.JShotStepType.BALL_BOTH;
             Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
             int newB1 = newType == JShotStep.JShotStepType.CUE_STRIKE ? 0 : -1;
+
+            ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(tableState.balls, ball.pos, next.ghostBallPos, new ArrayList<>(List.of(ball.number)));
+            if (!intersectingBalls.isEmpty()) {
+                continue;
+            }
 
             JShotStep newStepTree = new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, newB1, ball.number);
 
@@ -135,10 +141,46 @@ public class ShotTree {
             System.out.println("asdasd");
         }
 
+        Vector2d diffLeftMostBefore = next.leftMost.sub(ball.pos);
+        Vector2d diffRightMostBefore = next.rightMost.sub(ball.pos);
+
+        //TODO when next type is KISS there are cases where leftmost and rightmost crosses that should be legal
+        if (diffLeftMostBefore.determinant(diffRightMostBefore) > 0) {
+            return null;
+        }
+
+        if (!PathFinder.isKissShotReachable(next, ball.pos)) {
+            return null;
+        }
+
         Vector2d newLeftMost = ball.pos.add(PathFinder.getKissTargetPos(next.rightMost, ball.pos, !isLeft).mult(2));
         Vector2d newRightMost = ball.pos.add(PathFinder.getKissTargetPos(next.leftMost, ball.pos, !isLeft).mult(2));
         JShotStep.JShotStepType newType = isLeft ? JShotStep.JShotStepType.KISS_LEFT : JShotStep.JShotStepType.KISS_RIGHT;
         Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
+
+        Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(newLeftMost, ball.number, next.leftMost, true, tableState.balls, next, 2);
+        Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(newRightMost, ball.number, next.rightMost, false, tableState.balls, next, 2);
+
+        if (adjustedLeftMostTarget == null || adjustedRightMostTarget == null) {
+            return null;
+        }
+
+        Vector2d diffLeftMostAfter = adjustedLeftMostTarget.sub(ball.pos);
+        Vector2d diffRightMostAfter = adjustedRightMostTarget.sub(ball.pos);
+
+        if (diffLeftMostAfter.determinant(diffRightMostAfter) > 0) {
+            return null;
+        }
+
+        next.leftMost = adjustedLeftMostTarget;
+        next.rightMost = adjustedRightMostTarget;
+        next.ghostBallPos = getGhostBall(next.type, next.leftMost, next.rightMost, next.posB1);
+        next.b1 = ball.number;
+
+        ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(tableState.balls, newGhostBallPos, next.ghostBallPos, new ArrayList<>(List.of(ball.number)));
+        if (!intersectingBalls.isEmpty()) {
+            return null;
+        }
 
         if (!PathFinder.isKissShotReachable(next, newGhostBallPos)) {
             return null;
@@ -150,7 +192,7 @@ public class ShotTree {
     private static ArrayList<JShotStep> getDoneShots(ArrayList<JShotStep> shots) {
         ArrayList<JShotStep> doneShots = new ArrayList<>();
         for (JShotStep shot : shots) {
-            if (shot.type == JShotStep.JShotStepType.CUE_STRIKE) {
+            if (shot.type == JShotStep.JShotStepType.CUE_STRIKE && JShotStep.ballBothInvolvedInShot(shot)) {
                 doneShots.add(shot);
             }
         }
@@ -160,7 +202,7 @@ public class ShotTree {
     private static ArrayList<JShotStep> getUndoneShots(ArrayList<JShotStep> shots) {
         ArrayList<JShotStep> undoneShots = new ArrayList<>();
         for (JShotStep shot : shots) {
-            if (shot.type != JShotStep.JShotStepType.CUE_STRIKE) {
+            if (shot.type != JShotStep.JShotStepType.CUE_STRIKE || !JShotStep.ballBothInvolvedInShot(shot)) {
                 undoneShots.add(shot);
             }
         }

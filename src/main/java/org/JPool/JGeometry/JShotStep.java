@@ -62,6 +62,20 @@ public class JShotStep {
         }
     }
 
+    public static boolean ballBothInvolvedInShot(JShotStep shot) {
+        if (shot.type == JShotStepType.BALL_BOTH) {
+            return true;
+        } else if (shot.next == null) {
+            return false;
+        }
+
+        if (shot.branch != null) {
+            return ballBothInvolvedInShot(shot.next) || ballBothInvolvedInShot(shot.branch);
+        } else {
+            return ballBothInvolvedInShot(shot.next);
+        }
+    }
+
     public JShotStepType type;
     public JShotStep next;
     public JShotStep branch;

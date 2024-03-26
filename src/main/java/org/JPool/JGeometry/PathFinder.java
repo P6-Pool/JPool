@@ -2,10 +2,10 @@ package org.JPool.JGeometry;
 
 import org.JPool.FastFiz.Ball;
 import org.JPool.FastFiz.TableState;
-import org.JPool.Main;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class PathFinder {
     public static ArrayList<Vector2d> getTableIdxes(int d) {
@@ -62,31 +62,21 @@ public class PathFinder {
         return diff.normalize().rotateClockwise(angle).mult(adj / 2);
     }
 
-    public static Vector2d adjustTarget(Ball mainBall, Vector2d target, boolean isLeft, ArrayList<Ball> balls, JShotStep step, int depth) {
+    public static Vector2d adjustTarget(Vector2d mainBallPos, int mainBallNumber, Vector2d target, boolean isLeft, ArrayList<Ball> balls, JShotStep step, int depth) {
         double angle = isLeft ? -Math.PI / 2 : Math.PI / 2;
-        Vector2d perpOffset = target.sub(mainBall.pos).normalize().rotateClockwise(angle).mult(Ball.radius);
-        Vector2d lineSegStartPoint = mainBall.pos.add(perpOffset);
+        Vector2d perpOffset = target.sub(mainBallPos).normalize().rotateClockwise(angle).mult(Ball.radius);
+        Vector2d lineSegStartPoint = mainBallPos.add(perpOffset);
         Vector2d lineSegEndPoint = target.add(perpOffset);
 
-        Ball intersectingBall = null;
-
-        for (Ball ball : balls) {
-            if (ball.number == mainBall.number || ball.state == 0 || ball.number == step.b1) {
-                continue;
-            }
-            if (isLineSegmentAndBallColliding(lineSegStartPoint, lineSegEndPoint, ball.pos, Ball.radius)) {
-                intersectingBall = ball;
-                break;
-            }
-        }
-
-        if (intersectingBall == null) {
+        ArrayList<Ball> intersectingBalls = getBallsIntersectingWithLineSegment(balls, lineSegStartPoint, lineSegEndPoint, new ArrayList<>(List.of(mainBallNumber, step.b1)));
+        if (intersectingBalls.isEmpty()) {
             return target;
         }
 
-        Vector2d kiss = getKissTargetPos(mainBall.pos, intersectingBall.pos, isLeft);
+        Ball intersectingBall = intersectingBalls.get(0);
+        Vector2d kiss = getKissTargetPos(mainBallPos, intersectingBall.pos, isLeft);
         Vector2d adjustedLinePointQ = intersectingBall.pos.add(kiss);
-        Vector2d adjustedLinePointP = mainBall.pos.sub(kiss);
+        Vector2d adjustedLinePointP = mainBallPos.sub(kiss);
         Vector2d adjustedTarget;
 
         if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
@@ -96,7 +86,7 @@ public class PathFinder {
             Vector2d adjustedEdge = getLineLineIntersection(adjustedLinePointQ, adjustedLineDiff, target, leftRightLineDiff);
             adjustedTarget = adjustedEdge.add(leftRightLineDiff.normalize().mult(Ball.radius));
         } else {
-            ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBall.pos, mainBall.pos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
+            ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBallPos, mainBallPos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
             if (intersections.size() < 2) {
                 return null;
             }
@@ -104,12 +94,30 @@ public class PathFinder {
         }
 
         if (depth > 0) {
-            return adjustTarget(mainBall, adjustedTarget, isLeft, balls, step, depth - 1);
+            return adjustTarget(mainBallPos, mainBallNumber, adjustedTarget, isLeft, balls, step, depth - 1);
         }
 
-        //TODO add intersection check
+        intersectingBalls = getBallsIntersectingWithLineSegment(balls, lineSegStartPoint, lineSegEndPoint, new ArrayList<>(List.of(mainBallNumber, step.b1)));
+        if (intersectingBalls.isEmpty()) {
+            return null;
+        }
 
         return adjustedTarget;
+    }
+
+    public static ArrayList<Ball> getBallsIntersectingWithLineSegment(ArrayList<Ball> balls, Vector2d segmentStartPoint, Vector2d segmentEndPoint, ArrayList<Integer> excludedBalls) {
+        ArrayList<Ball> intersectingBalls = new ArrayList<>();
+
+        for (Ball ball : balls) {
+            if (ball.state == 0 || excludedBalls.contains(ball.number)) {
+                continue;
+            }
+            if (isLineSegmentAndBallColliding(segmentStartPoint, segmentEndPoint, ball.pos, Ball.radius)) {
+                intersectingBalls.add(ball);
+            }
+        }
+
+        return intersectingBalls;
     }
 
     public static boolean isKissShotReachable(JShotStep next, Vector2d ballPos) {
