@@ -150,4 +150,47 @@ class PathFinderTest {
         actual = PathFinder.isLineSegmentAndBallColliding(new Vector2d(1, 4), new Vector2d(2, 4), new Vector2d(6, 4), 4);
         assertTrue(actual);
     }
+
+    @Test
+    void getRailHitsTest() {
+        Vector2d startPoint = new Vector2d(0.5, 1.0);
+        Vector2d endPoint = new Vector2d(0.6, 1.1);
+        ArrayList<Vector2d> actual = PathFinder.getRailHits(startPoint, endPoint);
+        ArrayList<Vector2d> expected = new ArrayList<>(){{add(new Vector2d(0.1, 0.1));}};
+        assertArrayEquals(expected.toArray(), actual.toArray());
+
+
+        startPoint = new Vector2d(0.4, 1.4);
+        endPoint = new Vector2d(2.64343, 2.03986);
+        actual = PathFinder.getRailHits(startPoint, endPoint);
+        expected = new ArrayList<>(){{
+            add(new Vector2d(0.6874, 0.1961));
+            add(new Vector2d(-1.0589, 0.302));
+            add(new Vector2d(0.4972, 0.1418));
+        }};
+        assertArrayEquals(expected.toArray(), actual.toArray());
+
+
+        startPoint = new Vector2d(0.2, 1.2);
+        endPoint = new Vector2d(3.649, 0.87282);
+        actual = PathFinder.getRailHits(startPoint, endPoint);
+        expected = new ArrayList<>(){{
+            add(new Vector2d(0.8874, -0.0842));
+            add(new Vector2d(-1.0589, -0.1004));
+            add(new Vector2d(1.0589, -0.1004));
+            add(new Vector2d(-0.4439, -0.0421));
+        }};
+        assertArrayEquals(expected.toArray(), actual.toArray());
+
+
+        startPoint = new Vector2d(0.4, 0.6);
+        endPoint = new Vector2d(-0.81009, -0.96091);
+        actual = PathFinder.getRailHits(startPoint, endPoint);
+        expected = new ArrayList<>(){{
+            add(new Vector2d(-0.3714, -0.4791));
+            add(new Vector2d(0.0716, -0.0923));
+            add(new Vector2d(0.7671, 0.9895));
+        }};
+        assertArrayEquals(expected.toArray(), actual.toArray());
+    }
 }

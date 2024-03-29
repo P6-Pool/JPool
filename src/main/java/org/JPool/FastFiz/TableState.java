@@ -11,6 +11,8 @@ public class TableState {
 
     public static double width = 1.116;
     public static double length = 2.236;
+    public static double innerWidth = width - 2 * Ball.radius;
+    public static double innerLength = length - 2 * Ball.radius;
 
     public static double cornerPocketWidth = 0.11;
     public static double sidePocketWidth = 0.12;

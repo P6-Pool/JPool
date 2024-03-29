@@ -11,7 +11,7 @@ public class Main
     {
 //        Client clientP5 = new Client("localhost", 50051);
         Client clientGG = new Client("localhost", 50052);
-        TableState activeTableState = TableState.randomTableState(8);
+        TableState activeTableState = TableState.randomTableState(4);
 //        clientP5.showShots(ShotTree.generateShotTree(activeTableState, 3, TableState.playerPattern.SOLID), activeTableState);
         clientGG.showShots(ShotTree.generateShotTree(activeTableState, 4, TableState.playerPattern.SOLID), activeTableState);
     }

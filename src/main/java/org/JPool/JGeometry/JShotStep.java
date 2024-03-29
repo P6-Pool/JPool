@@ -7,7 +7,7 @@ public class JShotStep {
     public static int idCounter = 0;
     public enum JShotStepType {CUE_STRIKE, POCKET, RAIL, STRIKE, KISS_LEFT, KISS_RIGHT, BALL_BOTH}
 
-    public JShotStep(JShotStepType type, JShotStep next, JShotStep branch, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2) {
+    public JShotStep(JShotStepType type, JShotStep next, JShotStep branch, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2, int depth) {
         this.type = type;
         this.next = next;
         this.branch = branch;
@@ -18,6 +18,7 @@ public class JShotStep {
         this.b1 = b1;
         this.b2 = b2;
         this.id = idCounter++;
+        this.depth = depth;
     }
 
     public static JShotStep JShotPocketStep(Pocket pocket) {
@@ -30,7 +31,8 @@ public class JShotStep {
                 pocket.leftMost.add(pocket.rightMost.sub(pocket.leftMost).normalize().mult(Ball.radius)),
                 pocket.rightMost.add(pocket.leftMost.sub(pocket.rightMost).normalize().mult(Ball.radius)),
                 -1,
-                -1
+                -1,
+                0
         );
     }
 
@@ -44,7 +46,8 @@ public class JShotStep {
                 leftMost.copy(),
                 rightMost.copy(),
                 b1,
-                b2
+                b2,
+                depth
         );
     }
 
@@ -86,4 +89,5 @@ public class JShotStep {
     public int b1;
     public int b2;
     public int id;
+    public int depth;
 }
