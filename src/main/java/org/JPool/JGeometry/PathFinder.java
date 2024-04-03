@@ -33,18 +33,9 @@ public class PathFinder {
             ghostBallPos.y = (tableIdx.y + 1) * TableState.length - ballPos.y;
         }
 
-        return ghostBallPos.sub(tableIdx.mult(Ball.radius * 2));
-    }
+        ghostBallPos = ghostBallPos.sub(tableIdx.mult(Ball.radius * 2));
 
-    public static ArrayList<Vector2d> getProjectedBallPoses(int d, Ball ball) {
-        ArrayList<Vector2d> tableIdxes = getTableIdxes(d);
-        ArrayList<Vector2d> projectedGhostBallPoses = new ArrayList<>();
-
-        for (Vector2d tableIdx : tableIdxes) {
-            projectedGhostBallPoses.add(getProjectedBallPos(tableIdx, ball.pos));
-        }
-
-        return projectedGhostBallPoses;
+        return ghostBallPos;
     }
 
     public static Vector2d getKissTargetPos(Vector2d ballToBeShotPos, Vector2d ballToBeHitPos, boolean isLeft) {
@@ -69,7 +60,7 @@ public class PathFinder {
             return target;
         }
 
-        Ball intersectingBall = intersectingBalls.get(0);
+        Ball intersectingBall = intersectingBalls.getFirst();
         Vector2d kiss = getKissTargetPos(mainBallPos, intersectingBall.pos, isLeft);
         Vector2d adjustedLinePointQ = intersectingBall.pos.add(kiss);
         Vector2d adjustedLinePointP = mainBallPos.sub(kiss);
@@ -80,7 +71,8 @@ public class PathFinder {
             Vector2d otherTarget = isLeft ? step.rightMost : step.leftMost;
             Vector2d leftRightLineDiff = otherTarget.sub(target);
             Vector2d adjustedEdge = getLineLineIntersection(adjustedLinePointQ, adjustedLineDiff, target, leftRightLineDiff);
-            adjustedTarget = adjustedEdge.add(leftRightLineDiff.normalize().mult(Ball.radius));
+            Vector2d offset = leftRightLineDiff.mag() == 0 ? new Vector2d(0, 0) : leftRightLineDiff.normalize().mult(Ball.radius);
+            adjustedTarget = adjustedEdge.add(offset);
         } else {
             ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBallPos, mainBallPos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
             if (intersections.size() < 2) {
@@ -149,13 +141,13 @@ public class PathFinder {
         }
 
         // Check if either line is vertical
-        if (Double.isInfinite(lLineSlope)) {
+        if (Double.isInfinite(lLineSlope) || Double.isNaN(lLineSlope)) {
             double x = lPoint.x;
             double y = mLineSlope * x + mPoint.y - mLineSlope * mPoint.x;
             return new Vector2d(x, y);
         }
 
-        if (Double.isInfinite(mLineSlope)) {
+        if (Double.isInfinite(mLineSlope) || Double.isNaN(mLineSlope)) {
             double x = mPoint.x;
             double y = lLineSlope * x + lPoint.y - lLineSlope * lPoint.x;
             return new Vector2d(x, y);
@@ -225,14 +217,8 @@ public class PathFinder {
         return angleToPoint <= angle / 2;
     }
 
-    public static Vector2d getTableIdx(Vector2d pos) {
-        int x = (int) (pos.x / (TableState.width - 2 * Ball.radius));
-        int y = (int) (pos.y / (TableState.length - 2 * Ball.radius));
-        return new Vector2d(x, y);
-    }
 
-
-    public static ArrayList<Vector2d> getRailHits(Vector2d startPos, Vector2d endPos) {
+    public static ArrayList<Vector2d> getHitProjections(Vector2d startPos, Vector2d endPos) {
         enum HitType {RIGHT_VERT_HIT, LEFT_VERT_HIT, TOP_HOR_HIT, BOTTOM_HOR_HIT}
 
         int numPosVertHits = (int) ((endPos.x - Ball.radius) / TableState.innerWidth);
@@ -275,29 +261,30 @@ public class PathFinder {
         }
 
         intersections.sort(Comparator.comparing((Pair<Vector2d, HitType> a) -> a.getValue0().sub(startPos)));
+
         ArrayList<Vector2d> hitVectors = new ArrayList<>() {{
-            add(intersections.get(0).getValue0().sub(startPos));
+            add(intersections.getFirst().getValue0().sub(startPos));
         }};
 
-        boolean flipVert = intersections.get(0).getValue1() == HitType.LEFT_VERT_HIT || intersections.get(0).getValue1() == HitType.RIGHT_VERT_HIT;
-        boolean flipHor = intersections.get(0).getValue1() == HitType.BOTTOM_HOR_HIT || intersections.get(0).getValue1() == HitType.TOP_HOR_HIT;;
+        boolean flipVert = intersections.getFirst().getValue1() == HitType.LEFT_VERT_HIT || intersections.getFirst().getValue1() == HitType.RIGHT_VERT_HIT;
+        boolean flipHor = intersections.getFirst().getValue1() == HitType.BOTTOM_HOR_HIT || intersections.getFirst().getValue1() == HitType.TOP_HOR_HIT;;
 
         for (int i = 1; i < intersections.size(); i++) {
-            Pair<Vector2d, HitType> prev = intersections.get(i - 1);
-            Pair<Vector2d, HitType> next = intersections.get(i);
+            Pair<Vector2d, HitType> prevHit = intersections.get(i - 1);
+            Pair<Vector2d, HitType> nextHit = intersections.get(i);
 
-            Vector2d hitDiff = next.getValue0().sub(prev.getValue0());
+            Vector2d hitDiff = nextHit.getValue0().sub(prevHit.getValue0());
 
             hitDiff.x *= flipVert ? -1 : 1;
             hitDiff.y *= flipHor ? -1 : 1;
 
             hitVectors.add(hitDiff);
 
-            if (next.getValue1() == HitType.LEFT_VERT_HIT || next.getValue1() == HitType.RIGHT_VERT_HIT) {
+            if (nextHit.getValue1() == HitType.LEFT_VERT_HIT || nextHit.getValue1() == HitType.RIGHT_VERT_HIT) {
                 flipVert = !flipVert;
             }
 
-            if (next.getValue1() == HitType.BOTTOM_HOR_HIT || next.getValue1() == HitType.TOP_HOR_HIT) {
+            if (nextHit.getValue1() == HitType.BOTTOM_HOR_HIT || nextHit.getValue1() == HitType.TOP_HOR_HIT) {
                 flipHor = !flipHor;
             }
         }

@@ -2,6 +2,7 @@ package org.JPool.JGeometry;
 
 import org.JPool.FastFiz.Ball;
 import org.JPool.FastFiz.TableState;
+import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -43,28 +44,101 @@ class PathFinderTest {
 
     @Test
     void getProjectedBallPos() {
-//        Ball ball = new Ball(0, 0, 0.1, new Vector2d(2, 2));
-//        TableState tableState = new TableState(10, 20, new ArrayList<>(), 1, 1);
-//
-//        Vector2d expected = new Vector2d(17.8, 2);
-//        Vector2d actual = PathFinder.getProjectedBallPos(new Vector2d(1, 0), ball, tableState);
-//
-//        assertEquals(expected, actual);
-//
-//        expected = new Vector2d(21.6, 2);
-//        actual = PathFinder.getProjectedBallPos(new Vector2d(2, 0), ball, tableState);
-//
-//        assertEquals(expected, actual);
-//
-//        expected = new Vector2d(21.6, 37.8);
-//        actual = PathFinder.getProjectedBallPos(new Vector2d(2, 1), ball, tableState);
-//
-//        assertEquals(expected, actual);
-//
-//        expected = new Vector2d(-21.4, -1.8);
-//        actual = PathFinder.getProjectedBallPos(new Vector2d(-3, -1), ball, tableState);
-//
-//        assertEquals(expected, actual);
+        Vector2d tableIdx = new Vector2d(1, 0);
+        Vector2d endPoint = new Vector2d(0.5, 1.0);
+        Vector2d actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        Vector2d expected = new Vector2d(1.67485, 1.0);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(2, 0);
+        endPoint = new Vector2d(0.5, 1.0);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(2.61771, 1.0);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(1, 0);
+        endPoint = new Vector2d(0.0, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(2.17485, 1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(2, 0);
+        endPoint = new Vector2d(0.028575, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(2.14628, 1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(3, 0);
+        endPoint = new Vector2d(0.0, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(4.29255, 1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(-1, 0);
+        endPoint = new Vector2d(0.028575, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(0.028575, 1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(-2, 0);
+        endPoint = new Vector2d(0.0, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(-2.1177,1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(-3, 0);
+        endPoint = new Vector2d(0.028575, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(-2.08913, 1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(-4, 0);
+        endPoint = new Vector2d(0.0, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(-4.2354,1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(-2, 1);
+        endPoint = new Vector2d(0.0, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(-2.1177,3.32785);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(1, 0);
+        endPoint = new Vector2d(1.116 - 0.028575, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(1.116 - 0.028575, 1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(2, 0);
+        endPoint = new Vector2d(1.116, 1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(3.2337, 1.087);;
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(0, 1);
+        endPoint = new Vector2d(1.0668, 2.20743);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(1.0668, 2.20743);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(0, 1);
+        endPoint = new Vector2d(1.0956,2.17859);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(1.0956, 2.23626);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(-1, 0);
+        endPoint = new Vector2d(0.02858,1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(0.02858,1.087);
+        assertEquals(expected, actual);
+
+        tableIdx = new Vector2d(-2, 0);
+        endPoint = new Vector2d(0.02858,1.087);
+        actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
+        expected = new Vector2d(-2.08913,1.087);
+        assertEquals(expected, actual);
     }
 
     @Test
@@ -155,14 +229,14 @@ class PathFinderTest {
     void getRailHitsTest() {
         Vector2d startPoint = new Vector2d(0.5, 1.0);
         Vector2d endPoint = new Vector2d(0.6, 1.1);
-        ArrayList<Vector2d> actual = PathFinder.getRailHits(startPoint, endPoint);
+        ArrayList<Vector2d> actual = PathFinder.getHitProjections(startPoint, endPoint);
         ArrayList<Vector2d> expected = new ArrayList<>(){{add(new Vector2d(0.1, 0.1));}};
         assertArrayEquals(expected.toArray(), actual.toArray());
 
 
         startPoint = new Vector2d(0.4, 1.4);
         endPoint = new Vector2d(2.64343, 2.03986);
-        actual = PathFinder.getRailHits(startPoint, endPoint);
+        actual = PathFinder.getHitProjections(startPoint, endPoint);
         expected = new ArrayList<>(){{
             add(new Vector2d(0.6874, 0.1961));
             add(new Vector2d(-1.0589, 0.302));
@@ -173,7 +247,7 @@ class PathFinderTest {
 
         startPoint = new Vector2d(0.2, 1.2);
         endPoint = new Vector2d(3.649, 0.87282);
-        actual = PathFinder.getRailHits(startPoint, endPoint);
+        actual = PathFinder.getHitProjections(startPoint, endPoint);
         expected = new ArrayList<>(){{
             add(new Vector2d(0.8874, -0.0842));
             add(new Vector2d(-1.0589, -0.1004));
@@ -185,11 +259,43 @@ class PathFinderTest {
 
         startPoint = new Vector2d(0.4, 0.6);
         endPoint = new Vector2d(-0.81009, -0.96091);
-        actual = PathFinder.getRailHits(startPoint, endPoint);
+        actual = PathFinder.getHitProjections(startPoint, endPoint);
         expected = new ArrayList<>(){{
             add(new Vector2d(-0.3714, -0.4791));
             add(new Vector2d(0.0716, -0.0923));
             add(new Vector2d(0.7671, 0.9895));
+        }};
+        assertArrayEquals(expected.toArray(), actual.toArray());
+
+
+        startPoint = new Vector2d(0.1, 0.373);
+        endPoint = new Vector2d(2.17485, 1.087);
+        actual = PathFinder.getHitProjections(startPoint, endPoint);
+        expected = new ArrayList<>(){{
+            add(new Vector2d(0.98743, 0.33979));
+            add(new Vector2d(-1.05885, 0.36437));
+            add(new Vector2d(0.02858, 0.00983));
+        }};
+        assertArrayEquals(expected.toArray(), actual.toArray());
+
+
+        startPoint = new Vector2d(0.70095, 2.09721);
+        endPoint = new Vector2d(1.0668, 2.20743);
+        actual = PathFinder.getHitProjections(startPoint, endPoint);
+        expected = new ArrayList<>(){{
+            add(new Vector2d(0.36586, 0.11022));
+            add(new Vector2d(0, 0));
+        }};
+        assertArrayEquals(expected.toArray(), actual.toArray());
+
+
+        startPoint = new Vector2d(0.70095, 2.09721);
+        endPoint = new Vector2d(1.08743, 2.22807);
+        actual = PathFinder.getHitProjections(startPoint, endPoint);
+        expected = new ArrayList<>(){{
+            add(new Vector2d(0.3255, 0.11022));
+            add(new Vector2d(0.06098, -0.02065));
+            add(new Vector2d(0, 0));
         }};
         assertArrayEquals(expected.toArray(), actual.toArray());
     }

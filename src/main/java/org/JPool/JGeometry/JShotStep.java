@@ -2,6 +2,7 @@ package org.JPool.JGeometry;
 
 import org.JPool.FastFiz.Ball;
 import org.JPool.FastFiz.Pocket;
+import org.JPool.Main;
 
 public class JShotStep {
     public static int idCounter = 0;
@@ -22,14 +23,35 @@ public class JShotStep {
     }
 
     public static JShotStep JShotPocketStep(Pocket pocket) {
+
+        double len = Math.sqrt(2 * Ball.radius * Ball.radius);
+
+        Vector2d leftMostOffset = (switch (pocket.type) {
+            case NE_Pocket -> new Vector2d(1, -1);
+            case E_Pocket -> new Vector2d(-1, -1);
+            case SE_Pocket -> new Vector2d(-1, -1);
+            case SW_Pocket -> new Vector2d(-1, 1);
+            case W_Pocket -> new Vector2d(1, 1);
+            case NW_Pocket -> new Vector2d(1, 1);
+        }).normalize().mult(len);
+
+        Vector2d rightMostOffset = (switch (pocket.type) {
+            case NE_Pocket -> new Vector2d(-1, 1);
+            case E_Pocket -> new Vector2d(-1, 1);
+            case SE_Pocket -> new Vector2d(1, 1);
+            case SW_Pocket -> new Vector2d(1, -1);
+            case W_Pocket -> new Vector2d(1, -1);
+            case NW_Pocket -> new Vector2d(-1, -1);
+        }).normalize().mult(len);
+
         return new JShotStep(
                 JShotStepType.POCKET,
                 null,
                 null,
                 null,
                 pocket.center,
-                pocket.leftMost.add(pocket.rightMost.sub(pocket.leftMost).normalize().mult(Ball.radius)),
-                pocket.rightMost.add(pocket.leftMost.sub(pocket.rightMost).normalize().mult(Ball.radius)),
+                pocket.leftMost.add(leftMostOffset),
+                pocket.rightMost.add(rightMostOffset),
                 -1,
                 -1,
                 0
