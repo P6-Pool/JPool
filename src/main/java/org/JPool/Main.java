@@ -2,7 +2,10 @@ package org.JPool;
 
 import org.JPool.FastFiz.TableState;
 import org.JPool.Grpc.Client;
+import org.JPool.JGeometry.JShotStep;
 import org.JPool.JGeometry.ShotTree;
+
+import java.util.ArrayList;
 
 
 public class Main
@@ -12,7 +15,8 @@ public class Main
 //        Client clientP5 = new Client("localhost", 50051);
         Client clientGG = new Client("localhost", 50052);
         TableState activeTableState = TableState.randomTableState(3);
-//        clientP5.showShots(ShotTree.generateShotTree(activeTableState, 3, TableState.playerPattern.SOLID), activeTableState);
-        clientGG.showShots(ShotTree.generateShotTree(activeTableState, 5, TableState.playerPattern.SOLID), activeTableState);
+        ArrayList<JShotStep> shots = ShotTree.generateShotTree(activeTableState, 4, TableState.playerPattern.SOLID);
+//        clientP5.showShots(shots, activeTableState);
+        clientGG.showShots(shots, activeTableState);
     }
 }

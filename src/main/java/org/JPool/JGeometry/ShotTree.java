@@ -130,6 +130,9 @@ public class ShotTree {
                     if (i == numSteps - 1) {
                         newLeftMost = ball.pos.add(newLeftMostDiff.normalize().mult(-Ball.radius * 2));
                         newRightMost = ball.pos.add(newRightMostDiff.normalize().mult(-Ball.radius * 2));
+                        if (ball.number == 0) {
+                            newType = JShotStep.JShotStepType.CUE_STRIKE;
+                        }
                     }
 
                     prev = new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, ball.number, ball.number, next.depth + 1);
