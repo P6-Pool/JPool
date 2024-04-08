@@ -104,7 +104,7 @@ public class ShotTree {
                     railLeftMostHits.removeLast();
                 } else if (railLeftMostHits.size() < railRightMostHits.size()) {
                     railRightMostHits.removeLast();
-                } else if (railLeftMostHits.getLast().mag() == 0 && railRightMostHits.getLast().mag() == 0) {
+                } else if (railLeftMostHits.getLast().mag() <= 0.001 && railRightMostHits.getLast().mag() <= 0.001) {
                     railRightMostHits.removeLast();
                     railLeftMostHits.removeLast();
                 }
@@ -130,9 +130,7 @@ public class ShotTree {
                     if (i == numSteps - 1) {
                         newLeftMost = ball.pos.add(newLeftMostDiff.normalize().mult(-Ball.radius * 2));
                         newRightMost = ball.pos.add(newRightMostDiff.normalize().mult(-Ball.radius * 2));
-                        if (ball.number == 0) {
-                            newType = JShotStep.JShotStepType.CUE_STRIKE;
-                        }
+                        newType = ball.number == 0 ? JShotStep.JShotStepType.CUE_STRIKE : JShotStep.JShotStepType.BALL_BOTH;
                     }
 
                     prev = new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, ball.number, ball.number, next.depth + 1);
@@ -153,10 +151,6 @@ public class ShotTree {
 
             if (invalidBallBothBall(next, tableState, ball, playerPattern)) {
                 continue;
-            }
-
-            if (next.id == 701) {
-                System.out.println("asd");
             }
 
             Vector2d diffLeftMostBefore = next.leftMost.sub(ball.pos);
@@ -237,10 +231,6 @@ public class ShotTree {
 
     private static JShotStep generateKissBall(TableState tableState, Ball ball, JShotStep targetStep, boolean isLeft) {
         JShotStep next = targetStep.copy();
-
-        if (next.id == 701) {
-            System.out.println("asd");
-        }
 
         Vector2d diffLeftMostBefore = next.leftMost.sub(ball.pos);
         Vector2d diffRightMostBefore = next.rightMost.sub(ball.pos);
