@@ -48,6 +48,7 @@ public class ShotTree {
         ArrayList<JShotStep> newStepTrees = new ArrayList<>();
         ArrayList<Vector2d> tableIdxes = PathFinder.getTableIdxes(numRailHits);
 
+        // TODO add kiss balls to list of possible balls
         for (Ball ball : tableState.balls) {
 
             if (invalidBallBothBall(targetStep, tableState, ball, playerPattern)) {
@@ -63,40 +64,70 @@ public class ShotTree {
                 Vector2d projectedLeftMost = PathFinder.getProjectedBallPos(tableIdx, next.leftMost);
                 Vector2d projectedRightMost = PathFinder.getProjectedBallPos(tableIdx, next.rightMost);
 
-
                 Vector2d diffLeftMostBefore = projectedLeftMost.sub(ball.pos);
                 Vector2d diffRightMostBefore = projectedRightMost.sub(ball.pos);
 
                 int tableDist = (int) (Math.abs(tableIdx.x) + Math.abs(tableIdx.y));
-                boolean leftRightFlipped = tableDist % 2 == 0;
+                boolean leftRightFlipped = tableDist % 2 == 1;
 
-                if (leftRightFlipped && diffLeftMostBefore.determinant(diffRightMostBefore) > 0) {
+                if (leftRightFlipped && diffLeftMostBefore.determinant(diffRightMostBefore) < 0) {
                     continue;
-                } else if (!leftRightFlipped && diffLeftMostBefore.determinant(diffRightMostBefore) < 0) {
-                    continue;
-                }
-
-                Vector2d adjustedLeftMostTarget = next.leftMost; //PathFinder.adjustTarget(ball.pos, ball.number, next.leftMost, true, tableState.balls, next, 2);
-                Vector2d adjustedRightMostTarget = next.rightMost; //PathFinder.adjustTarget(ball.pos, ball.number, next.rightMost, false, tableState.balls, next, 2);
-
-                if (adjustedLeftMostTarget == null || adjustedRightMostTarget == null) {
+                } else if (!leftRightFlipped && diffLeftMostBefore.determinant(diffRightMostBefore) > 0) {
                     continue;
                 }
 
-                Vector2d diffLeftMostAfter = adjustedLeftMostTarget.sub(ball.pos);
-                Vector2d diffRightMostAfter = adjustedRightMostTarget.sub(ball.pos);
+                ArrayList<Ball> balls = new ArrayList<>(tableState.balls);
+                for (int y = (int) Math.min(0, tableIdx.y); y <= (int) Math.max(tableIdx.y, 0); y++) {
+                    for (int x = (int) Math.min(0, tableIdx.x); x <= (int) Math.max(tableIdx.x, 0); x++) {
+                        if (x == 0 && y == 0) {
+                            continue;
+                        }
+                        for (Ball b : tableState.balls) {
+                            Ball projectedBall = b.copy();
+                            projectedBall.pos = PathFinder.getProjectedBallPos(new Vector2d(x, y), b.pos);
+                            balls.add(projectedBall);
+                        }
+                    }
+                }
 
-//                if (diffLeftMostAfter.determinant(diffRightMostAfter) > 0) {
-//                    continue;
-//                }
+                JShotStep projectedStep = next.copy();
+                Vector2d adjustedProjectedLeftMostTarget;
+                Vector2d adjustedProjectedRightMostTarget;
 
-                next.leftMost = adjustedLeftMostTarget;
-                next.rightMost = adjustedRightMostTarget;
+                if (!leftRightFlipped) {
+                    projectedStep.leftMost = projectedLeftMost;
+                    projectedStep.rightMost = projectedRightMost;
+
+                    adjustedProjectedLeftMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, projectedLeftMost, true, balls, projectedStep, 2);
+                    adjustedProjectedRightMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, projectedRightMost, false, balls, projectedStep, 2);
+                } else {
+                    projectedStep.leftMost = projectedRightMost;
+                    projectedStep.rightMost = projectedLeftMost;
+
+                    adjustedProjectedLeftMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, projectedLeftMost, false, balls, projectedStep, 2);
+                    adjustedProjectedRightMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, projectedRightMost, true, balls, projectedStep, 2);
+                }
+
+
+                if (adjustedProjectedLeftMostTarget == null || adjustedProjectedRightMostTarget == null) {
+                    continue;
+                }
+
+                Vector2d diffLeftMostAfter = adjustedProjectedLeftMostTarget.sub(ball.pos);
+                Vector2d diffRightMostAfter = adjustedProjectedRightMostTarget.sub(ball.pos);
+
+                if (leftRightFlipped && diffLeftMostAfter.determinant(diffRightMostAfter) < 0) {
+                    continue;
+                } else if (!leftRightFlipped && diffLeftMostAfter.determinant(diffRightMostAfter) > 0) {
+                    continue;
+                }
+
+                ArrayList<Vector2d> railLeftMostHits = PathFinder.getHitProjections(ball.pos, adjustedProjectedLeftMostTarget);
+                ArrayList<Vector2d> railRightMostHits = PathFinder.getHitProjections(ball.pos, adjustedProjectedRightMostTarget);
+
+                // TODO set next.leftmost and next.rightmost to the end of the rail hits.
                 next.ghostBallPos = getGhostBall(next.type, next.leftMost, next.rightMost, next.posB1);
                 next.b1 = ball.number;
-
-                ArrayList<Vector2d> railLeftMostHits = PathFinder.getHitProjections(ball.pos, projectedLeftMost);
-                ArrayList<Vector2d> railRightMostHits = PathFinder.getHitProjections(ball.pos, projectedRightMost);
 
                 assert Math.abs(railLeftMostHits.size() - railRightMostHits.size()) < 2;
 
@@ -114,8 +145,8 @@ public class ShotTree {
                 for (int i = 0; i < numSteps; i++) {
                     int idx = numSteps - 1 - i;
 
-                    Vector2d newLeftMostDiff = i % 2 == 0 ? railRightMostHits.get(idx) : railLeftMostHits.get(idx) ;
-                    Vector2d newRightMostDiff = i % 2 == 0 ? railLeftMostHits.get(idx) : railRightMostHits.get(idx) ;
+                    Vector2d newLeftMostDiff = i % 2 == 0 ? railRightMostHits.get(idx) : railLeftMostHits.get(idx);
+                    Vector2d newRightMostDiff = i % 2 == 0 ? railLeftMostHits.get(idx) : railRightMostHits.get(idx);
 
                     Vector2d newLeftMost = next.rightMost.sub(newLeftMostDiff);
                     Vector2d newRightMost = next.leftMost.sub(newRightMostDiff);

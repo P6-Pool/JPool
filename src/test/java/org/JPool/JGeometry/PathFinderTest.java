@@ -1,8 +1,5 @@
 package org.JPool.JGeometry;
 
-import org.JPool.FastFiz.Ball;
-import org.JPool.FastFiz.TableState;
-import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -138,6 +135,89 @@ class PathFinderTest {
         endPoint = new Vector2d(0.02858,1.087);
         actual = PathFinder.getProjectedBallPos(tableIdx, endPoint);
         expected = new Vector2d(-2.08913,1.087);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void getBackProjectedBallPos() {
+        Vector2d projectBallPos = new Vector2d(1.67485, 1.0);
+        Vector2d actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        Vector2d expected = new Vector2d(0.5, 1.0);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(2.61771, 1.0);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.5, 1.0);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(2.17485, 1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.0, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(2.14628, 1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.028575, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(4.29255, 1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.0, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(0.028575, 1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.028575, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(-2.1177,1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.0, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(-2.08913, 1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.028575, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(-4.2354,1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.0, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(-2.1177,3.32785);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.0, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(1.116 - 0.028575, 1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(1.116 - 0.028575, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(3.2337, 1.087);;
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(1.116, 1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(1.0668, 2.20743);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(1.0668, 2.20743);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(1.0956, 2.23626);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(1.0956,2.17859);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(0.02858,1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.02858,1.087);
+        assertEquals(expected, actual);
+
+        projectBallPos = new Vector2d(-2.08913,1.087);
+        actual = PathFinder.getBackProjectedBallPos(projectBallPos);
+        expected = new Vector2d(0.02858,1.087);
         assertEquals(expected, actual);
     }
 

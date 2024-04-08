@@ -38,6 +38,23 @@ public class PathFinder {
         return ghostBallPos;
     }
 
+    public static Vector2d getBackProjectedBallPos(Vector2d projectedBallPos) {
+        double newX = (projectedBallPos.x - Ball.radius) % TableState.innerWidth + Ball.radius;
+        double newY = (projectedBallPos.y - Ball.radius) % TableState.innerLength + Ball.radius;
+
+        int tableIdxX = (int) ((projectedBallPos.x - Ball.radius) / TableState.innerWidth);
+        int tableIdxY = (int) ((projectedBallPos.y - Ball.radius) / TableState.innerLength);
+
+        if (tableIdxX % 2 == 1) {
+            newX = TableState.width - newX;
+        }
+        if (tableIdxY % 2 == 1) {
+            newY = TableState.length - newY;
+        }
+
+        return new Vector2d(newX, newY);
+    }
+
     public static Vector2d getKissTargetPos(Vector2d ballToBeShotPos, Vector2d ballToBeHitPos, boolean isLeft) {
         Vector2d diff = ballToBeShotPos.sub(ballToBeHitPos);
         double hyp = diff.mag();
@@ -50,47 +67,54 @@ public class PathFinder {
     }
 
     public static Vector2d adjustTarget(Vector2d mainBallPos, int mainBallNumber, Vector2d target, boolean isLeft, ArrayList<Ball> balls, JShotStep step, int depth) {
-        double angle = isLeft ? -Math.PI / 2 : Math.PI / 2;
-        Vector2d perpOffset = target.sub(mainBallPos).normalize().rotateClockwise(angle).mult(Ball.radius);
-        Vector2d lineSegStartPoint = mainBallPos.add(perpOffset);
-        Vector2d lineSegEndPoint = target.add(perpOffset);
+        Vector2d adjustedTarget = target.copy();
 
-        ArrayList<Ball> intersectingBalls = getBallsIntersectingWithLineSegment(balls, lineSegStartPoint, lineSegEndPoint, new ArrayList<>(List.of(mainBallNumber, step.b1)));
+        double angle = isLeft ? -Math.PI / 2 : Math.PI / 2;
+        Vector2d perpOffset = adjustedTarget.sub(mainBallPos).normalize().rotateClockwise(angle).mult(Ball.radius);
+        Vector2d lineSegStartPoint = mainBallPos.add(perpOffset);
+        Vector2d lineSegEndPoint = adjustedTarget.add(perpOffset);
+
+        ArrayList<Ball> intersectingBalls = getBallsIntersectingWithLineSegment(balls, lineSegStartPoint, lineSegEndPoint, new ArrayList<>(List.of(mainBallNumber)));
         if (intersectingBalls.isEmpty()) {
-            return target;
+            return adjustedTarget;
         }
 
-        Ball intersectingBall = intersectingBalls.getFirst();
-        Vector2d kiss = getKissTargetPos(mainBallPos, intersectingBall.pos, isLeft);
-        Vector2d adjustedLinePointQ = intersectingBall.pos.add(kiss);
-        Vector2d adjustedLinePointP = mainBallPos.sub(kiss);
-        Vector2d adjustedTarget;
+        while (depth-- > 0) {
+            Ball intersectingBall = intersectingBalls.getFirst();
+            Vector2d kiss = getKissTargetPos(mainBallPos, intersectingBall.pos, isLeft);
+            Vector2d adjustedLinePointQ = intersectingBall.pos.add(kiss);
+            Vector2d adjustedLinePointP = mainBallPos.sub(kiss);
 
-        if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
-            Vector2d adjustedLineDiff = adjustedLinePointQ.sub(adjustedLinePointP);
-            Vector2d otherTarget = isLeft ? step.rightMost : step.leftMost;
-            Vector2d leftRightLineDiff = otherTarget.sub(target);
-            Vector2d adjustedEdge = getLineLineIntersection(adjustedLinePointQ, adjustedLineDiff, target, leftRightLineDiff);
-            Vector2d offset = leftRightLineDiff.mag() == 0 ? new Vector2d(0, 0) : leftRightLineDiff.normalize().mult(Ball.radius);
-            adjustedTarget = adjustedEdge.add(offset);
-        } else {
-            ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBallPos, mainBallPos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
-            if (intersections.size() < 2) {
+            if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
+                Vector2d adjustedLineDiff = adjustedLinePointQ.sub(adjustedLinePointP);
+                Vector2d otherTarget = isLeft ? step.rightMost : step.leftMost;
+                Vector2d leftRightLineDiff = otherTarget.sub(adjustedTarget);
+                Vector2d adjustedEdge = getLineLineIntersection(adjustedLinePointQ, adjustedLineDiff, adjustedTarget, leftRightLineDiff);
+                Vector2d offset = leftRightLineDiff.mag() == 0 ? new Vector2d(0, 0) : leftRightLineDiff.normalize().mult(Ball.radius);
+                adjustedTarget = adjustedEdge.add(offset);
+            } else {
+                ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBallPos, mainBallPos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
+                if (intersections.size() < 2) {
+                    return null;
+                }
+                adjustedTarget = intersections.get(intersections.indexOf(Collections.min(intersections)));
+            }
+
+            perpOffset = adjustedTarget.sub(mainBallPos).normalize().rotateClockwise(angle).mult(Ball.radius);
+            lineSegStartPoint = mainBallPos.add(perpOffset);
+            lineSegEndPoint = adjustedTarget.add(perpOffset);
+
+            if (adjustedTarget.sub(mainBallPos).mag() < adjustedTarget.sub(target).mag()) {
                 return null;
             }
-            adjustedTarget = intersections.get(intersections.indexOf(Collections.min(intersections)));
+
+            intersectingBalls = getBallsIntersectingWithLineSegment(balls, lineSegStartPoint, lineSegEndPoint, new ArrayList<>(List.of(mainBallNumber, step.b1)));
+            if (intersectingBalls.isEmpty()) {
+                return adjustedTarget;
+            }
         }
 
-        if (depth > 0) {
-            return adjustTarget(mainBallPos, mainBallNumber, adjustedTarget, isLeft, balls, step, depth - 1);
-        }
-
-        intersectingBalls = getBallsIntersectingWithLineSegment(balls, lineSegStartPoint, lineSegEndPoint, new ArrayList<>(List.of(mainBallNumber, step.b1)));
-        if (intersectingBalls.isEmpty()) {
-            return null;
-        }
-
-        return adjustedTarget;
+        return null;
     }
 
     public static ArrayList<Ball> getBallsIntersectingWithLineSegment(ArrayList<Ball> balls, Vector2d segmentStartPoint, Vector2d segmentEndPoint, ArrayList<Integer> excludedBalls) {

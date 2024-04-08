@@ -19,4 +19,8 @@ public class Ball {
     public static boolean notInPlay(Ball b) {
         return b.state == 2;
     }
+
+    public Ball copy() {
+        return new Ball(number, state, pos.copy());
+    }
 }
