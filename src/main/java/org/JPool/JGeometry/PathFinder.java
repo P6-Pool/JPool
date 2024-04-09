@@ -104,7 +104,7 @@ public class PathFinder {
             lineSegStartPoint = mainBallPos.add(perpOffset);
             lineSegEndPoint = adjustedTarget.add(perpOffset);
 
-            if (adjustedTarget.sub(mainBallPos).mag() < adjustedTarget.sub(target).mag()) {
+            if (adjustedTarget.sub(target).mag() > Ball.radius) {
                 return null;
             }
 

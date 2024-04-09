@@ -125,9 +125,6 @@ public class ShotTree {
                 ArrayList<Vector2d> railLeftMostHits = PathFinder.getHitProjections(ball.pos, adjustedProjectedLeftMostTarget);
                 ArrayList<Vector2d> railRightMostHits = PathFinder.getHitProjections(ball.pos, adjustedProjectedRightMostTarget);
 
-                // TODO set next.leftmost and next.rightmost to the end of the rail hits.
-                next.ghostBallPos = getGhostBall(next.type, next.leftMost, next.rightMost, next.posB1);
-                next.b1 = ball.number;
 
                 assert Math.abs(railLeftMostHits.size() - railRightMostHits.size()) < 2;
 
@@ -141,6 +138,23 @@ public class ShotTree {
                 }
 
                 int numSteps = railLeftMostHits.size();
+
+                // TODO set next.leftmost and next.rightmost to the end of the rail hits.
+                next.b1 = ball.number;
+                next.rightMost = ball.pos;
+                next.leftMost = ball.pos;
+
+                for (int i = 0; i < numSteps; i++) {
+                    next.leftMost = next.leftMost.add(railLeftMostHits.get(i));
+                    next.rightMost = next.rightMost.add(railRightMostHits.get(i));
+                }
+
+                next.ghostBallPos = getGhostBall(next.type, next.leftMost, next.rightMost, next.posB1);
+
+                ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(balls, ball.pos, PathFinder.getProjectedBallPos(tableIdx, next.ghostBallPos), new ArrayList<>(List.of(ball.number)));
+                if (!intersectingBalls.isEmpty()) {
+                    continue;
+                }
 
                 for (int i = 0; i < numSteps; i++) {
                     int idx = numSteps - 1 - i;
