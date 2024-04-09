@@ -15,7 +15,7 @@ public class Main
 //        Client clientP5 = new Client("localhost", 50051);
         Client clientGG = new Client("localhost", 50052);
         TableState activeTableState = TableState.randomTableState(15);
-        ArrayList<JShotStep> shots = ShotTree.generateShotTree(activeTableState, 6, TableState.playerPattern.SOLID);
+        ArrayList<JShotStep> shots = ShotTree.generateShotTree(activeTableState, 5, TableState.playerPattern.SOLID);
 //        clientP5.showShots(shots, activeTableState);
         clientGG.showShots(shots, activeTableState);
     }

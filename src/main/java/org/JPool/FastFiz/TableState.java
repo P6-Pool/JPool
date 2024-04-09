@@ -3,6 +3,8 @@ package org.JPool.FastFiz;
 import org.JPool.JGeometry.Vector2d;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 public class TableState {
@@ -33,6 +35,30 @@ public class TableState {
     }
 
     public static TableState randomTableState(int numBalls) {
+        ArrayList<Ball> balls = new ArrayList<>();
+        ArrayList<Integer> ballNums = new ArrayList<>(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+        Random rand = new Random(numBalls);
+
+        for (int i = 0; i < numBalls; i++) {
+            int randIdx = rand.nextInt(ballNums.size());
+            int ballNum = ballNums.get(randIdx);
+            double yPos = TableState.length / 18 * (i + 1);
+            double xPos = Ball.radius + rand.nextDouble() * (TableState.width - Ball.radius * 2);
+            balls.add(new Ball(ballNum, 1, new Vector2d(xPos, yPos)));
+            ballNums.remove(randIdx);
+        }
+
+        ballNums.add(0);
+        int randIdx = rand.nextInt(ballNums.size());
+        int ballNum = ballNums.get(randIdx);
+        double yPos = TableState.length / 18 * (ballNum + 1);
+        double xPos = Ball.radius + rand.nextDouble() * (TableState.width - Ball.radius * 2);
+        balls.add(new Ball(0, 1, new Vector2d(xPos, yPos)));
+
+        return new TableState(balls);
+    }
+
+    public static TableState randomSequentialTableState(int numBalls) {
         Random rand = new Random(numBalls);
         ArrayList<Ball> balls = new ArrayList<>();
         for (int i = 0; i < numBalls + 1; i++) {

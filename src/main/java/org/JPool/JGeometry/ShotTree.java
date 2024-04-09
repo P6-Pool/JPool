@@ -139,7 +139,6 @@ public class ShotTree {
 
                 int numSteps = railLeftMostHits.size();
 
-                // TODO set next.leftmost and next.rightmost to the end of the rail hits.
                 next.b1 = ball.number;
                 next.rightMost = ball.pos;
                 next.leftMost = ball.pos;
