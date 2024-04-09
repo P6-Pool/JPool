@@ -1,6 +1,6 @@
-package org.JPool.FastFiz;
+package org.CueCraft.FastFiz;
 
-import org.JPool.JGeometry.Vector2d;
+import org.CueCraft.Geometry.Vector2d;
 
 public class Pocket {
     public enum PocketType {NE_Pocket, E_Pocket, SE_Pocket, SW_Pocket, W_Pocket, NW_Pocket}

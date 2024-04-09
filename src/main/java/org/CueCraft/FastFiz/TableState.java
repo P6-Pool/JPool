@@ -1,9 +1,8 @@
-package org.JPool.FastFiz;
+package org.CueCraft.FastFiz;
 
-import org.JPool.JGeometry.Vector2d;
+import org.CueCraft.Geometry.Vector2d;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 

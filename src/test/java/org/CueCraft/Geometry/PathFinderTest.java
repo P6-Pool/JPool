@@ -1,4 +1,4 @@
-package org.JPool.JGeometry;
+package org.CueCraft.Geometry;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;

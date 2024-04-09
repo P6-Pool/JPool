@@ -1,6 +1,6 @@
-package org.JPool.FastFiz;
+package org.CueCraft.FastFiz;
 
-import org.JPool.JGeometry.Vector2d;
+import org.CueCraft.Geometry.Vector2d;
 
 public class Ball {
     public int number;

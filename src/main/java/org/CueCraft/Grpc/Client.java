@@ -1,17 +1,17 @@
-package org.JPool.Grpc;
+package org.CueCraft.Grpc;
 
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import org.JPool.FastFiz.Ball;
-import org.JPool.FastFiz.TableState;
-import org.JPool.JGeometry.JShotStep;
-import org.JPool.JGeometry.Vector2d;
-import org.JPool.protobuf.JPoolAPIGrpc;
-import org.JPool.protobuf.ShowShotsRequest;
-import org.JPool.protobuf.Shot;
-import org.JPool.protobuf.ShotType;
-import org.JPool.protobuf.Point;
+import org.CueCraft.FastFiz.Ball;
+import org.CueCraft.FastFiz.TableState;
+import org.CueCraft.Geometry.ShotStep;
+import org.CueCraft.Geometry.Vector2d;
+import org.CueCraft.protobuf.JPoolAPIGrpc;
+import org.CueCraft.protobuf.ShowShotsRequest;
+import org.CueCraft.protobuf.Shot;
+import org.CueCraft.protobuf.ShotType;
+import org.CueCraft.protobuf.Point;
 
 import java.util.ArrayList;
 
@@ -26,11 +26,11 @@ public class Client {
         stub = JPoolAPIGrpc.newBlockingStub(channel);
     }
 
-    public Empty showShots(ArrayList<JShotStep> shots, TableState tableState) {
+    public Empty showShots(ArrayList<ShotStep> shots, TableState tableState) {
 
         ArrayList<Shot> serShots = new ArrayList<>();
 
-        for (JShotStep shot : shots) {
+        for (ShotStep shot : shots) {
             serShots.add(convertShotToSerShot(shot));
         }
 
@@ -46,7 +46,7 @@ public class Client {
         channel.shutdown();
     }
 
-    private Shot convertShotToSerShot(JShotStep shot) {
+    private Shot convertShotToSerShot(ShotStep shot) {
         Shot.Builder builder = Shot.newBuilder()
                 .setType(convertJShotStepTypeToSerShotType(shot.type))
                 .setB1(shot.b1)
@@ -63,7 +63,7 @@ public class Client {
         return builder.build();
     }
 
-    private ShotType convertJShotStepTypeToSerShotType(JShotStep.JShotStepType type) {
+    private ShotType convertJShotStepTypeToSerShotType(ShotStep.ShotStepType type) {
         return ShotType.forNumber(type.ordinal());
     }
 
@@ -71,20 +71,20 @@ public class Client {
         return Point.newBuilder().setX(vec.x).setY(vec.y).build();
     }
 
-    private org.JPool.protobuf.TableState ConvertTableStateToSerTableState(TableState tableState) {
-        ArrayList<org.JPool.protobuf.Ball> serBalls = new ArrayList<>();
+    private org.CueCraft.protobuf.TableState ConvertTableStateToSerTableState(TableState tableState) {
+        ArrayList<org.CueCraft.protobuf.Ball> serBalls = new ArrayList<>();
 
         for (Ball ball : tableState.balls) {
             serBalls.add(ConvertBallToSerBall(ball));
         }
 
-        return org.JPool.protobuf.TableState.newBuilder()
+        return org.CueCraft.protobuf.TableState.newBuilder()
                 .addAllBalls(serBalls)
                 .build();
     }
 
-    private org.JPool.protobuf.Ball ConvertBallToSerBall(Ball ball) {
-        return org.JPool.protobuf.Ball.newBuilder()
+    private org.CueCraft.protobuf.Ball ConvertBallToSerBall(Ball ball) {
+        return org.CueCraft.protobuf.Ball.newBuilder()
                 .setPos(convertVector2DToSerPoint(ball.pos))
                 .setNumber(ball.number)
                 .setState(ball.state)

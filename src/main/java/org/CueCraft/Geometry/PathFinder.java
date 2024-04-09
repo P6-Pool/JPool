@@ -1,7 +1,7 @@
-package org.JPool.JGeometry;
+package org.CueCraft.Geometry;
 
-import org.JPool.FastFiz.Ball;
-import org.JPool.FastFiz.TableState;
+import org.CueCraft.FastFiz.Ball;
+import org.CueCraft.FastFiz.TableState;
 import org.javatuples.Pair;
 
 import java.util.*;
@@ -66,7 +66,7 @@ public class PathFinder {
         return diff.normalize().rotateClockwise(angle).mult(adj / 2);
     }
 
-    public static Vector2d adjustTarget(Vector2d mainBallPos, int mainBallNumber, Vector2d target, boolean isLeft, ArrayList<Ball> balls, JShotStep step, int depth) {
+    public static Vector2d adjustTarget(Vector2d mainBallPos, int mainBallNumber, Vector2d target, boolean isLeft, ArrayList<Ball> balls, ShotStep step, int depth) {
         Vector2d adjustedTarget = target.copy();
 
         double angle = isLeft ? -Math.PI / 2 : Math.PI / 2;
@@ -85,7 +85,7 @@ public class PathFinder {
             Vector2d adjustedLinePointQ = intersectingBall.pos.add(kiss);
             Vector2d adjustedLinePointP = mainBallPos.sub(kiss);
 
-            if (step.type == JShotStep.JShotStepType.POCKET || step.type == JShotStep.JShotStepType.RAIL) {
+            if (step.type == ShotStep.ShotStepType.POCKET || step.type == ShotStep.ShotStepType.RAIL) {
                 Vector2d adjustedLineDiff = adjustedLinePointQ.sub(adjustedLinePointP);
                 Vector2d otherTarget = isLeft ? step.rightMost : step.leftMost;
                 Vector2d leftRightLineDiff = otherTarget.sub(adjustedTarget);
@@ -132,8 +132,8 @@ public class PathFinder {
         return intersectingBalls;
     }
 
-    public static boolean isKissShotReachable(JShotStep next, Vector2d ballPos) {
-        if (next.type == JShotStep.JShotStepType.KISS_LEFT) {
+    public static boolean isKissShotReachable(ShotStep next, Vector2d ballPos) {
+        if (next.type == ShotStep.ShotStepType.KISS_LEFT) {
             Vector2d spanLeftMost = next.leftMost.sub(next.next.rightMost);
             Vector2d spanRightMost = next.rightMost.sub(next.posB1);
             Vector2d intersection = PathFinder.getLineLineIntersection(next.leftMost, spanLeftMost, next.rightMost, spanRightMost);
@@ -142,7 +142,7 @@ public class PathFinder {
             }
             Vector2d point = ballPos.sub(intersection);
             return PathFinder.isPointInSpan(spanLeftMost, spanRightMost, point);
-        } else if (next.type == JShotStep.JShotStepType.KISS_RIGHT) {
+        } else if (next.type == ShotStep.ShotStepType.KISS_RIGHT) {
             Vector2d spanLeftMost = next.rightMost.sub(next.next.leftMost);
             Vector2d spanRightMost = next.leftMost.sub(next.posB1);
             Vector2d intersection = PathFinder.getLineLineIntersection(next.leftMost, spanLeftMost, next.rightMost, spanRightMost);

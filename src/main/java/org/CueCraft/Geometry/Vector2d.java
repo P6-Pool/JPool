@@ -1,4 +1,4 @@
-package org.JPool.JGeometry;
+package org.CueCraft.Geometry;
 
 import java.util.Locale;
 

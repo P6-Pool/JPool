@@ -1,9 +1,9 @@
-package org.JPool;
+package org.CueCraft;
 
-import org.JPool.FastFiz.TableState;
-import org.JPool.Grpc.Client;
-import org.JPool.JGeometry.JShotStep;
-import org.JPool.JGeometry.ShotTree;
+import org.CueCraft.FastFiz.TableState;
+import org.CueCraft.Grpc.Client;
+import org.CueCraft.Geometry.ShotStep;
+import org.CueCraft.Geometry.ShotTree;
 
 import java.util.ArrayList;
 
@@ -15,7 +15,7 @@ public class Main
 //        Client clientP5 = new Client("localhost", 50051);
         Client clientGG = new Client("localhost", 50052);
         TableState activeTableState = TableState.randomTableState(15);
-        ArrayList<JShotStep> shots = ShotTree.generateShotTree(activeTableState, 5, TableState.playerPattern.SOLID);
+        ArrayList<ShotStep> shots = ShotTree.generateShotTree(activeTableState, 5, TableState.playerPattern.SOLID);
 //        clientP5.showShots(shots, activeTableState);
         clientGG.showShots(shots, activeTableState);
     }

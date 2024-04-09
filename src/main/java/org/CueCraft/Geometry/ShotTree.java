@@ -1,24 +1,24 @@
-package org.JPool.JGeometry;
+package org.CueCraft.Geometry;
 
-import org.JPool.FastFiz.Ball;
-import org.JPool.FastFiz.TableState;
+import org.CueCraft.FastFiz.Ball;
+import org.CueCraft.FastFiz.TableState;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ShotTree {
-    static public ArrayList<JShotStep> generateShotTree(TableState tableState, int depth, TableState.playerPattern playerPattern) {
+    static public ArrayList<ShotStep> generateShotTree(TableState tableState, int depth, TableState.playerPattern playerPattern) {
         if (depth < 2) {
             return new ArrayList<>();
         }
 
-        JShotStep.idCounter = 0;
-        ArrayList<JShotStep> doneShots = new ArrayList<>();
-        ArrayList<JShotStep> undoneShots = generatePocketingWays(tableState);
+        ShotStep.idCounter = 0;
+        ArrayList<ShotStep> doneShots = new ArrayList<>();
+        ArrayList<ShotStep> undoneShots = generatePocketingWays(tableState);
 
         while (!undoneShots.isEmpty()) {
-            ArrayList<JShotStep> newShots = new ArrayList<>();
-            for (JShotStep shot : undoneShots) {
+            ArrayList<ShotStep> newShots = new ArrayList<>();
+            for (ShotStep shot : undoneShots) {
                 newShots.addAll(generateBallBoths(tableState, shot, playerPattern));
                 newShots.addAll(generateKissBalls(tableState, shot, playerPattern));
                 for (int i = 1; i < depth - shot.depth; i++) {
@@ -33,19 +33,19 @@ public class ShotTree {
         return doneShots;
     }
 
-    private static ArrayList<JShotStep> generatePocketingWays(TableState tableState) {
+    private static ArrayList<ShotStep> generatePocketingWays(TableState tableState) {
         return new ArrayList<>() {{
-            add(JShotStep.JShotPocketStep(tableState.E_Pocket));
-            add(JShotStep.JShotPocketStep(tableState.NE_Pocket));
-            add(JShotStep.JShotPocketStep(tableState.SW_Pocket));
-            add(JShotStep.JShotPocketStep(tableState.W_Pocket));
-            add(JShotStep.JShotPocketStep(tableState.SE_Pocket));
-            add(JShotStep.JShotPocketStep(tableState.NW_Pocket));
+            add(ShotStep.ShotPocketStep(tableState.E_Pocket));
+            add(ShotStep.ShotPocketStep(tableState.NE_Pocket));
+            add(ShotStep.ShotPocketStep(tableState.SW_Pocket));
+            add(ShotStep.ShotPocketStep(tableState.W_Pocket));
+            add(ShotStep.ShotPocketStep(tableState.SE_Pocket));
+            add(ShotStep.ShotPocketStep(tableState.NW_Pocket));
         }};
     }
 
-    private static ArrayList<JShotStep> generateRailShots(TableState tableState, JShotStep targetStep, TableState.playerPattern playerPattern, int numRailHits) {
-        ArrayList<JShotStep> newStepTrees = new ArrayList<>();
+    private static ArrayList<ShotStep> generateRailShots(TableState tableState, ShotStep targetStep, TableState.playerPattern playerPattern, int numRailHits) {
+        ArrayList<ShotStep> newStepTrees = new ArrayList<>();
         ArrayList<Vector2d> tableIdxes = PathFinder.getTableIdxes(numRailHits);
 
         // TODO add kiss balls to list of possible balls
@@ -58,8 +58,8 @@ public class ShotTree {
             tableIdxLoop:
             for (Vector2d tableIdx : tableIdxes) {
 
-                JShotStep next = targetStep.copy();
-                JShotStep prev = null;
+                ShotStep next = targetStep.copy();
+                ShotStep prev = null;
 
                 Vector2d projectedLeftMost = PathFinder.getProjectedBallPos(tableIdx, next.leftMost);
                 Vector2d projectedRightMost = PathFinder.getProjectedBallPos(tableIdx, next.rightMost);
@@ -90,7 +90,7 @@ public class ShotTree {
                     }
                 }
 
-                JShotStep projectedStep = next.copy();
+                ShotStep projectedStep = next.copy();
                 Vector2d adjustedProjectedLeftMostTarget;
                 Vector2d adjustedProjectedRightMostTarget;
 
@@ -164,7 +164,7 @@ public class ShotTree {
                     Vector2d newLeftMost = next.rightMost.sub(newLeftMostDiff);
                     Vector2d newRightMost = next.leftMost.sub(newRightMostDiff);
 
-                    JShotStep.JShotStepType newType = JShotStep.JShotStepType.RAIL;
+                    ShotStep.ShotStepType newType = ShotStep.ShotStepType.RAIL;
                     Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
 
                     if (i == 0 && !PathFinder.isKissShotReachable(next, newGhostBallPos)) {
@@ -174,10 +174,10 @@ public class ShotTree {
                     if (i == numSteps - 1) {
                         newLeftMost = ball.pos.add(newLeftMostDiff.normalize().mult(-Ball.radius * 2));
                         newRightMost = ball.pos.add(newRightMostDiff.normalize().mult(-Ball.radius * 2));
-                        newType = ball.number == 0 ? JShotStep.JShotStepType.CUE_STRIKE : JShotStep.JShotStepType.BALL_BOTH;
+                        newType = ball.number == 0 ? ShotStep.ShotStepType.CUE_STRIKE : ShotStep.ShotStepType.BALL_BOTH;
                     }
 
-                    prev = new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, ball.number, ball.number, next.depth + 1);
+                    prev = new ShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, ball.number, ball.number, next.depth + 1);
                     next = prev;
                 }
 
@@ -187,11 +187,11 @@ public class ShotTree {
         return newStepTrees;
     }
 
-    private static ArrayList<JShotStep> generateBallBoths(TableState tableState, JShotStep targetStep, TableState.playerPattern playerPattern) {
-        ArrayList<JShotStep> newStepTrees = new ArrayList<>();
+    private static ArrayList<ShotStep> generateBallBoths(TableState tableState, ShotStep targetStep, TableState.playerPattern playerPattern) {
+        ArrayList<ShotStep> newStepTrees = new ArrayList<>();
 
         for (Ball ball : tableState.balls) {
-            JShotStep next = targetStep.copy();
+            ShotStep next = targetStep.copy();
 
             if (invalidBallBothBall(next, tableState, ball, playerPattern)) {
                 continue;
@@ -233,16 +233,16 @@ public class ShotTree {
 
             Vector2d newLeftMost = ball.pos.add(diffNewLeftMost);
             Vector2d newRightMost = ball.pos.add(diffNewRightMost);
-            JShotStep.JShotStepType newType = ball.number == 0 ? JShotStep.JShotStepType.CUE_STRIKE : JShotStep.JShotStepType.BALL_BOTH;
+            ShotStep.ShotStepType newType = ball.number == 0 ? ShotStep.ShotStepType.CUE_STRIKE : ShotStep.ShotStepType.BALL_BOTH;
             Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
-            int newB1 = newType == JShotStep.JShotStepType.CUE_STRIKE ? 0 : -1;
+            int newB1 = newType == ShotStep.ShotStepType.CUE_STRIKE ? 0 : -1;
 
             ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(tableState.balls, ball.pos, next.ghostBallPos, new ArrayList<>(List.of(ball.number)));
             if (!intersectingBalls.isEmpty()) {
                 continue;
             }
 
-            JShotStep newStepTree = new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, newB1, ball.number, next.depth + 1);
+            ShotStep newStepTree = new ShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, newB1, ball.number, next.depth + 1);
 
             newStepTrees.add(newStepTree);
         }
@@ -250,8 +250,8 @@ public class ShotTree {
         return newStepTrees;
     }
 
-    private static ArrayList<JShotStep> generateKissBalls(TableState tableState, JShotStep targetStep, TableState.playerPattern playerPattern) {
-        ArrayList<JShotStep> newStepTrees = new ArrayList<>();
+    private static ArrayList<ShotStep> generateKissBalls(TableState tableState, ShotStep targetStep, TableState.playerPattern playerPattern) {
+        ArrayList<ShotStep> newStepTrees = new ArrayList<>();
 
         for (Ball ball : tableState.balls) {
 
@@ -259,8 +259,8 @@ public class ShotTree {
                 continue;
             }
 
-            JShotStep step1 = generateKissBall(tableState, ball, targetStep, true);
-            JShotStep step2 = generateKissBall(tableState, ball, targetStep, false);
+            ShotStep step1 = generateKissBall(tableState, ball, targetStep, true);
+            ShotStep step2 = generateKissBall(tableState, ball, targetStep, false);
 
             if (step1 != null) {
                 newStepTrees.add(step1);
@@ -273,8 +273,8 @@ public class ShotTree {
         return newStepTrees;
     }
 
-    private static JShotStep generateKissBall(TableState tableState, Ball ball, JShotStep targetStep, boolean isLeft) {
-        JShotStep next = targetStep.copy();
+    private static ShotStep generateKissBall(TableState tableState, Ball ball, ShotStep targetStep, boolean isLeft) {
+        ShotStep next = targetStep.copy();
 
         Vector2d diffLeftMostBefore = next.leftMost.sub(ball.pos);
         Vector2d diffRightMostBefore = next.rightMost.sub(ball.pos);
@@ -290,7 +290,7 @@ public class ShotTree {
 
         Vector2d newLeftMost = ball.pos.add(PathFinder.getKissTargetPos(next.rightMost, ball.pos, !isLeft).mult(2));
         Vector2d newRightMost = ball.pos.add(PathFinder.getKissTargetPos(next.leftMost, ball.pos, !isLeft).mult(2));
-        JShotStep.JShotStepType newType = isLeft ? JShotStep.JShotStepType.KISS_LEFT : JShotStep.JShotStepType.KISS_RIGHT;
+        ShotStep.ShotStepType newType = isLeft ? ShotStep.ShotStepType.KISS_LEFT : ShotStep.ShotStepType.KISS_RIGHT;
         Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
 
         Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(newLeftMost, ball.number, next.leftMost, true, tableState.balls, next, 2);
@@ -321,47 +321,47 @@ public class ShotTree {
             return null;
         }
 
-        return new JShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, -1, ball.number, next.depth + 1);
+        return new ShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, -1, ball.number, next.depth + 1);
     }
 
-    private static ArrayList<JShotStep> getDoneShots(ArrayList<JShotStep> shots) {
-        ArrayList<JShotStep> doneShots = new ArrayList<>();
-        for (JShotStep shot : shots) {
-            if (shot.type == JShotStep.JShotStepType.CUE_STRIKE && JShotStep.ballBothInvolvedInShot(shot)) {
+    private static ArrayList<ShotStep> getDoneShots(ArrayList<ShotStep> shots) {
+        ArrayList<ShotStep> doneShots = new ArrayList<>();
+        for (ShotStep shot : shots) {
+            if (shot.type == ShotStep.ShotStepType.CUE_STRIKE && ShotStep.ballBothInvolvedInShot(shot)) {
                 doneShots.add(shot);
             }
         }
         return doneShots;
     }
 
-    private static ArrayList<JShotStep> getUndoneShots(ArrayList<JShotStep> shots, int depth) {
-        ArrayList<JShotStep> undoneShots = new ArrayList<>();
-        for (JShotStep shot : shots) {
-            if (shot.depth < depth && (shot.type != JShotStep.JShotStepType.CUE_STRIKE)) {
+    private static ArrayList<ShotStep> getUndoneShots(ArrayList<ShotStep> shots, int depth) {
+        ArrayList<ShotStep> undoneShots = new ArrayList<>();
+        for (ShotStep shot : shots) {
+            if (shot.depth < depth && (shot.type != ShotStep.ShotStepType.CUE_STRIKE)) {
                 undoneShots.add(shot);
             }
         }
         return undoneShots;
     }
 
-    private static boolean invalidBallBothBall(JShotStep next, TableState tableState, Ball ball, TableState.playerPattern playerPattern) {
+    private static boolean invalidBallBothBall(ShotStep next, TableState tableState, Ball ball, TableState.playerPattern playerPattern) {
 
         boolean ballNotInPlay = ball.state == 0;
 
-        boolean pocketedCueBall = next.type == JShotStep.JShotStepType.POCKET && ball.number == 0;
-        boolean pocketedOpponentBall = next.type == JShotStep.JShotStepType.POCKET && ball.pattern != playerPattern;
+        boolean pocketedCueBall = next.type == ShotStep.ShotStepType.POCKET && ball.number == 0;
+        boolean pocketedOpponentBall = next.type == ShotStep.ShotStepType.POCKET && ball.pattern != playerPattern;
 
         int numPlayerBallsLeft = (int) tableState.balls.stream().filter(b -> b.pattern == playerPattern && b.number != 0 && b.number != 8 && b.state != 0).count();
-        boolean pocketed8BallEarly = next.type == JShotStep.JShotStepType.POCKET && ball.number == 8 && numPlayerBallsLeft != 0;
+        boolean pocketed8BallEarly = next.type == ShotStep.ShotStepType.POCKET && ball.number == 8 && numPlayerBallsLeft != 0;
 
-        boolean ballAlreadyInShot = JShotStep.ballInvolvedInShot(next, ball.number);
+        boolean ballAlreadyInShot = ShotStep.ballInvolvedInShot(next, ball.number);
 
         return ballNotInPlay || pocketedCueBall || pocketedOpponentBall || pocketed8BallEarly || ballAlreadyInShot;
     }
 
-    private static Vector2d getGhostBall(JShotStep.JShotStepType type, Vector2d leftMost, Vector2d rightMost, Vector2d ballPos) {
+    private static Vector2d getGhostBall(ShotStep.ShotStepType type, Vector2d leftMost, Vector2d rightMost, Vector2d ballPos) {
         Vector2d centerVector = leftMost.center(rightMost);
-        if (type == JShotStep.JShotStepType.POCKET || type == JShotStep.JShotStepType.RAIL) {
+        if (type == ShotStep.ShotStepType.POCKET || type == ShotStep.ShotStepType.RAIL) {
             return centerVector;
         } else {
             Vector2d offset = centerVector.sub(ballPos).normalize().mult(2 * Ball.radius);

@@ -1,7 +1,7 @@
-package org.JPool.JGeometry;
+package org.CueCraft.Geometry;
 
-import org.JPool.FastFiz.Ball;
-import org.JPool.FastFiz.TableState;
+import org.CueCraft.FastFiz.Ball;
+import org.CueCraft.FastFiz.TableState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

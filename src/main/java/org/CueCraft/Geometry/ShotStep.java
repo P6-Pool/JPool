@@ -1,14 +1,13 @@
-package org.JPool.JGeometry;
+package org.CueCraft.Geometry;
 
-import org.JPool.FastFiz.Ball;
-import org.JPool.FastFiz.Pocket;
-import org.JPool.Main;
+import org.CueCraft.FastFiz.Ball;
+import org.CueCraft.FastFiz.Pocket;
 
-public class JShotStep {
+public class ShotStep {
     public static int idCounter = 0;
-    public enum JShotStepType {CUE_STRIKE, POCKET, RAIL, STRIKE, KISS_LEFT, KISS_RIGHT, BALL_BOTH}
+    public enum ShotStepType {CUE_STRIKE, POCKET, RAIL, STRIKE, KISS_LEFT, KISS_RIGHT, BALL_BOTH}
 
-    public JShotStep(JShotStepType type, JShotStep next, JShotStep branch, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2, int depth) {
+    public ShotStep(ShotStepType type, ShotStep next, ShotStep branch, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2, int depth) {
         this.type = type;
         this.next = next;
         this.branch = branch;
@@ -22,7 +21,7 @@ public class JShotStep {
         this.depth = depth;
     }
 
-    public static JShotStep JShotPocketStep(Pocket pocket) {
+    public static ShotStep ShotPocketStep(Pocket pocket) {
 
         double len = Math.sqrt(2 * Ball.radius * Ball.radius);
 
@@ -44,8 +43,8 @@ public class JShotStep {
             case NW_Pocket -> new Vector2d(-1, -1);
         }).normalize().mult(len);
 
-        return new JShotStep(
-                JShotStepType.POCKET,
+        return new ShotStep(
+                ShotStepType.POCKET,
                 null,
                 null,
                 null,
@@ -58,8 +57,8 @@ public class JShotStep {
         );
     }
 
-    public JShotStep copy() {
-        return new JShotStep(
+    public ShotStep copy() {
+        return new ShotStep(
                 type,
                 next,
                 branch,
@@ -73,7 +72,7 @@ public class JShotStep {
         );
     }
 
-    public static boolean ballInvolvedInShot(JShotStep shot, int ballNumber) {
+    public static boolean ballInvolvedInShot(ShotStep shot, int ballNumber) {
         if (shot.b1 == ballNumber || shot.b2 == ballNumber) {
             return true;
         } else if (shot.next == null) {
@@ -87,8 +86,8 @@ public class JShotStep {
         }
     }
 
-    public static boolean ballBothInvolvedInShot(JShotStep shot) {
-        if (shot.type == JShotStepType.BALL_BOTH) {
+    public static boolean ballBothInvolvedInShot(ShotStep shot) {
+        if (shot.type == ShotStepType.BALL_BOTH) {
             return true;
         } else if (shot.next == null) {
             return false;
@@ -101,9 +100,9 @@ public class JShotStep {
         }
     }
 
-    public JShotStepType type;
-    public JShotStep next;
-    public JShotStep branch;
+    public ShotStepType type;
+    public ShotStep next;
+    public ShotStep branch;
     public Vector2d posB1;
     public Vector2d ghostBallPos;
     public Vector2d leftMost;
