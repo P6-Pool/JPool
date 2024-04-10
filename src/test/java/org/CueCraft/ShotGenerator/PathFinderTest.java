@@ -1,4 +1,4 @@
-package org.CueCraft.Geometry;
+package org.CueCraft.ShotGenerator;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;

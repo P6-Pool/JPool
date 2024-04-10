@@ -1,29 +1,29 @@
-package org.CueCraft.Geometry;
+package org.CueCraft.ShotGenerator;
 
-import org.CueCraft.FastFiz.Ball;
-import org.CueCraft.FastFiz.TableState;
+import org.CueCraft.Pool.Ball;
+import org.CueCraft.Pool.Table;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ShotTree {
-    static public ArrayList<ShotStep> generateShotTree(TableState tableState, int depth, TableState.playerPattern playerPattern) {
+public class ShotGenerator {
+    static public ArrayList<ShotStep> generateShots(Table table, int depth, Table.playerPattern playerPattern) {
         if (depth < 2) {
             return new ArrayList<>();
         }
 
         ShotStep.idCounter = 0;
         ArrayList<ShotStep> doneShots = new ArrayList<>();
-        ArrayList<ShotStep> undoneShots = generatePocketingWays(tableState);
+        ArrayList<ShotStep> undoneShots = generatePocketingWays(table);
 
         while (!undoneShots.isEmpty()) {
             ArrayList<ShotStep> newShots = new ArrayList<>();
             for (ShotStep shot : undoneShots) {
-                newShots.addAll(generateBallBoths(tableState, shot, playerPattern));
-                newShots.addAll(generateKissBalls(tableState, shot, playerPattern));
+                newShots.addAll(generateBallBoths(table, shot, playerPattern));
+                newShots.addAll(generateKissBalls(table, shot, playerPattern));
                 for (int i = 1; i < depth - shot.depth; i++) {
                     //TODO remember to not generate rail hots from shots where next is already a rail shot
-                    newShots.addAll(generateRailShots(tableState, shot, playerPattern, i));
+                    newShots.addAll(generateRailShots(table, shot, playerPattern, i));
                 }
             }
             doneShots.addAll(getDoneShots(newShots));
@@ -33,25 +33,25 @@ public class ShotTree {
         return doneShots;
     }
 
-    private static ArrayList<ShotStep> generatePocketingWays(TableState tableState) {
+    private static ArrayList<ShotStep> generatePocketingWays(Table table) {
         return new ArrayList<>() {{
-            add(ShotStep.ShotPocketStep(tableState.E_Pocket));
-            add(ShotStep.ShotPocketStep(tableState.NE_Pocket));
-            add(ShotStep.ShotPocketStep(tableState.SW_Pocket));
-            add(ShotStep.ShotPocketStep(tableState.W_Pocket));
-            add(ShotStep.ShotPocketStep(tableState.SE_Pocket));
-            add(ShotStep.ShotPocketStep(tableState.NW_Pocket));
+            add(ShotStep.ShotPocketStep(table.E_Pocket));
+            add(ShotStep.ShotPocketStep(table.NE_Pocket));
+            add(ShotStep.ShotPocketStep(table.SW_Pocket));
+            add(ShotStep.ShotPocketStep(table.W_Pocket));
+            add(ShotStep.ShotPocketStep(table.SE_Pocket));
+            add(ShotStep.ShotPocketStep(table.NW_Pocket));
         }};
     }
 
-    private static ArrayList<ShotStep> generateRailShots(TableState tableState, ShotStep targetStep, TableState.playerPattern playerPattern, int numRailHits) {
+    private static ArrayList<ShotStep> generateRailShots(Table table, ShotStep targetStep, Table.playerPattern playerPattern, int numRailHits) {
         ArrayList<ShotStep> newStepTrees = new ArrayList<>();
         ArrayList<Vector2d> tableIdxes = PathFinder.getTableIdxes(numRailHits);
 
         // TODO add kiss balls to list of possible balls
-        for (Ball ball : tableState.balls) {
+        for (Ball ball : table.balls) {
 
-            if (invalidBallBothBall(targetStep, tableState, ball, playerPattern)) {
+            if (invalidBallBothBall(targetStep, table, ball, playerPattern)) {
                 continue;
             }
 
@@ -76,13 +76,13 @@ public class ShotTree {
                     continue;
                 }
 
-                ArrayList<Ball> balls = new ArrayList<>(tableState.balls);
+                ArrayList<Ball> balls = new ArrayList<>(table.balls);
                 for (int y = (int) Math.min(0, tableIdx.y); y <= (int) Math.max(tableIdx.y, 0); y++) {
                     for (int x = (int) Math.min(0, tableIdx.x); x <= (int) Math.max(tableIdx.x, 0); x++) {
                         if (x == 0 && y == 0) {
                             continue;
                         }
-                        for (Ball b : tableState.balls) {
+                        for (Ball b : table.balls) {
                             Ball projectedBall = b.copy();
                             projectedBall.pos = PathFinder.getProjectedBallPos(new Vector2d(x, y), b.pos);
                             balls.add(projectedBall);
@@ -187,13 +187,13 @@ public class ShotTree {
         return newStepTrees;
     }
 
-    private static ArrayList<ShotStep> generateBallBoths(TableState tableState, ShotStep targetStep, TableState.playerPattern playerPattern) {
+    private static ArrayList<ShotStep> generateBallBoths(Table table, ShotStep targetStep, Table.playerPattern playerPattern) {
         ArrayList<ShotStep> newStepTrees = new ArrayList<>();
 
-        for (Ball ball : tableState.balls) {
+        for (Ball ball : table.balls) {
             ShotStep next = targetStep.copy();
 
-            if (invalidBallBothBall(next, tableState, ball, playerPattern)) {
+            if (invalidBallBothBall(next, table, ball, playerPattern)) {
                 continue;
             }
 
@@ -209,8 +209,8 @@ public class ShotTree {
                 continue;
             }
 
-            Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, next.leftMost, true, tableState.balls, next, 2);
-            Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, next.rightMost, false, tableState.balls, next, 2);
+            Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, next.leftMost, true, table.balls, next, 2);
+            Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(ball.pos, ball.number, next.rightMost, false, table.balls, next, 2);
 
             if (adjustedLeftMostTarget == null || adjustedRightMostTarget == null) {
                 continue;
@@ -237,7 +237,7 @@ public class ShotTree {
             Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
             int newB1 = newType == ShotStep.ShotStepType.CUE_STRIKE ? 0 : -1;
 
-            ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(tableState.balls, ball.pos, next.ghostBallPos, new ArrayList<>(List.of(ball.number)));
+            ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(table.balls, ball.pos, next.ghostBallPos, new ArrayList<>(List.of(ball.number)));
             if (!intersectingBalls.isEmpty()) {
                 continue;
             }
@@ -250,17 +250,17 @@ public class ShotTree {
         return newStepTrees;
     }
 
-    private static ArrayList<ShotStep> generateKissBalls(TableState tableState, ShotStep targetStep, TableState.playerPattern playerPattern) {
+    private static ArrayList<ShotStep> generateKissBalls(Table table, ShotStep targetStep, Table.playerPattern playerPattern) {
         ArrayList<ShotStep> newStepTrees = new ArrayList<>();
 
-        for (Ball ball : tableState.balls) {
+        for (Ball ball : table.balls) {
 
-            if (invalidBallBothBall(targetStep, tableState, ball, playerPattern)) {
+            if (invalidBallBothBall(targetStep, table, ball, playerPattern)) {
                 continue;
             }
 
-            ShotStep step1 = generateKissBall(tableState, ball, targetStep, true);
-            ShotStep step2 = generateKissBall(tableState, ball, targetStep, false);
+            ShotStep step1 = generateKissBall(table, ball, targetStep, true);
+            ShotStep step2 = generateKissBall(table, ball, targetStep, false);
 
             if (step1 != null) {
                 newStepTrees.add(step1);
@@ -273,7 +273,7 @@ public class ShotTree {
         return newStepTrees;
     }
 
-    private static ShotStep generateKissBall(TableState tableState, Ball ball, ShotStep targetStep, boolean isLeft) {
+    private static ShotStep generateKissBall(Table table, Ball ball, ShotStep targetStep, boolean isLeft) {
         ShotStep next = targetStep.copy();
 
         Vector2d diffLeftMostBefore = next.leftMost.sub(ball.pos);
@@ -293,8 +293,8 @@ public class ShotTree {
         ShotStep.ShotStepType newType = isLeft ? ShotStep.ShotStepType.KISS_LEFT : ShotStep.ShotStepType.KISS_RIGHT;
         Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
 
-        Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(newLeftMost, ball.number, next.leftMost, true, tableState.balls, next, 2);
-        Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(newRightMost, ball.number, next.rightMost, false, tableState.balls, next, 2);
+        Vector2d adjustedLeftMostTarget = PathFinder.adjustTarget(newLeftMost, ball.number, next.leftMost, true, table.balls, next, 2);
+        Vector2d adjustedRightMostTarget = PathFinder.adjustTarget(newRightMost, ball.number, next.rightMost, false, table.balls, next, 2);
 
         if (adjustedLeftMostTarget == null || adjustedRightMostTarget == null) {
             return null;
@@ -312,7 +312,7 @@ public class ShotTree {
         next.ghostBallPos = getGhostBall(next.type, next.leftMost, next.rightMost, next.posB1);
         next.b1 = ball.number;
 
-        ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(tableState.balls, newGhostBallPos, next.ghostBallPos, new ArrayList<>(List.of(ball.number)));
+        ArrayList<Ball> intersectingBalls = PathFinder.getBallsIntersectingWithLineSegment(table.balls, newGhostBallPos, next.ghostBallPos, new ArrayList<>(List.of(ball.number)));
         if (!intersectingBalls.isEmpty()) {
             return null;
         }
@@ -344,14 +344,14 @@ public class ShotTree {
         return undoneShots;
     }
 
-    private static boolean invalidBallBothBall(ShotStep next, TableState tableState, Ball ball, TableState.playerPattern playerPattern) {
+    private static boolean invalidBallBothBall(ShotStep next, Table table, Ball ball, Table.playerPattern playerPattern) {
 
         boolean ballNotInPlay = ball.state == 0;
 
         boolean pocketedCueBall = next.type == ShotStep.ShotStepType.POCKET && ball.number == 0;
         boolean pocketedOpponentBall = next.type == ShotStep.ShotStepType.POCKET && ball.pattern != playerPattern;
 
-        int numPlayerBallsLeft = (int) tableState.balls.stream().filter(b -> b.pattern == playerPattern && b.number != 0 && b.number != 8 && b.state != 0).count();
+        int numPlayerBallsLeft = (int) table.balls.stream().filter(b -> b.pattern == playerPattern && b.number != 0 && b.number != 8 && b.state != 0).count();
         boolean pocketed8BallEarly = next.type == ShotStep.ShotStepType.POCKET && ball.number == 8 && numPlayerBallsLeft != 0;
 
         boolean ballAlreadyInShot = ShotStep.ballInvolvedInShot(next, ball.number);

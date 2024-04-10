@@ -1,7 +1,7 @@
-package org.CueCraft.Geometry;
+package org.CueCraft.ShotGenerator;
 
-import org.CueCraft.FastFiz.Ball;
-import org.CueCraft.FastFiz.Pocket;
+import org.CueCraft.Pool.Ball;
+import org.CueCraft.Pool.Pocket;
 
 public class ShotStep {
     public static int idCounter = 0;

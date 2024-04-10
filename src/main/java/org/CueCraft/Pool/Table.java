@@ -1,12 +1,12 @@
-package org.CueCraft.FastFiz;
+package org.CueCraft.Pool;
 
-import org.CueCraft.Geometry.Vector2d;
+import org.CueCraft.ShotGenerator.Vector2d;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class TableState {
+public class Table {
     public final ArrayList<Ball> balls;
     public final Pocket NE_Pocket, E_Pocket, SE_Pocket, SW_Pocket, W_Pocket, NW_Pocket;
 
@@ -20,7 +20,7 @@ public class TableState {
 
     public enum playerPattern {STRIPED, SOLID, NONE}
 
-    public TableState(ArrayList<Ball> balls) {
+    public Table(ArrayList<Ball> balls) {
         this.balls = balls;
 
         double diagonalOffset= Math.sqrt(2) * (cornerPocketWidth / 2) / 2;
@@ -33,7 +33,7 @@ public class TableState {
         NW_Pocket = new Pocket(new Vector2d(diagonalOffset, length - diagonalOffset), Pocket.PocketType.NW_Pocket, cornerPocketWidth);
     }
 
-    public static TableState randomTableState(int numBalls) {
+    public static Table randomTableState(int numBalls) {
         ArrayList<Ball> balls = new ArrayList<>();
         ArrayList<Integer> ballNums = new ArrayList<>(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
         Random rand = new Random(numBalls);
@@ -41,8 +41,8 @@ public class TableState {
         for (int i = 0; i < numBalls; i++) {
             int randIdx = rand.nextInt(ballNums.size());
             int ballNum = ballNums.get(randIdx);
-            double yPos = TableState.length / 18 * (i + 1);
-            double xPos = Ball.radius + rand.nextDouble() * (TableState.width - Ball.radius * 2);
+            double yPos = Table.length / 18 * (i + 1);
+            double xPos = Ball.radius + rand.nextDouble() * (Table.width - Ball.radius * 2);
             balls.add(new Ball(ballNum, 1, new Vector2d(xPos, yPos)));
             ballNums.remove(randIdx);
         }
@@ -50,32 +50,32 @@ public class TableState {
         ballNums.add(0);
         int randIdx = rand.nextInt(ballNums.size());
         int ballNum = ballNums.get(randIdx);
-        double yPos = TableState.length / 18 * (ballNum + 1);
-        double xPos = Ball.radius + rand.nextDouble() * (TableState.width - Ball.radius * 2);
+        double yPos = Table.length / 18 * (ballNum + 1);
+        double xPos = Ball.radius + rand.nextDouble() * (Table.width - Ball.radius * 2);
         balls.add(new Ball(0, 1, new Vector2d(xPos, yPos)));
 
-        return new TableState(balls);
+        return new Table(balls);
     }
 
-    public static TableState randomSequentialTableState(int numBalls) {
+    public static Table randomSequentialTableState(int numBalls) {
         Random rand = new Random(numBalls);
         ArrayList<Ball> balls = new ArrayList<>();
         for (int i = 0; i < numBalls + 1; i++) {
-            balls.add(new Ball(i, 1, new Vector2d(Ball.radius + rand.nextDouble() * (TableState.width - Ball.radius * 2), TableState.length / 18 * (i + 1))));
+            balls.add(new Ball(i, 1, new Vector2d(Ball.radius + rand.nextDouble() * (Table.width - Ball.radius * 2), Table.length / 18 * (i + 1))));
         }
-        return new TableState(balls);
+        return new Table(balls);
     }
 
-    public static TableState linedTableState(int numBalls) {
+    public static Table linedTableState(int numBalls) {
         ArrayList<Ball> balls = new ArrayList<>();
         for (int i = 0; i < numBalls + 1; i++) {
-            balls.add(new Ball(i, 1, new Vector2d(TableState.width / 2, TableState.length / 18 * (i + 1))));
+            balls.add(new Ball(i, 1, new Vector2d(Table.width / 2, Table.length / 18 * (i + 1))));
         }
-        return new TableState(balls);
+        return new Table(balls);
     }
 
-    public static TableState noClearPathTableState() {
-        return new TableState(
+    public static Table noClearPathTableState() {
+        return new Table(
                 new ArrayList<>() {{
                     add(new Ball(0, 1, new Vector2d(0.28, 0.28)));
                     add(new Ball(1, 1, new Vector2d(0.2, 0.2)));

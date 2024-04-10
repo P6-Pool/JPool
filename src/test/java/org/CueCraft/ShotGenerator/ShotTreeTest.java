@@ -1,16 +1,14 @@
-package org.CueCraft.Geometry;
+package org.CueCraft.ShotGenerator;
 
-import org.CueCraft.FastFiz.Ball;
-import org.CueCraft.FastFiz.TableState;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.CueCraft.Pool.Ball;
+import org.CueCraft.Pool.Table;
 
 import java.util.ArrayList;
 
 class ShotTreeTest {
 
     ArrayList<Ball> balls;
-    TableState oneBallState, fiveBallState;
+    Table oneBallState, fiveBallState;
 
 //    @BeforeEach
 //    void setUp() {

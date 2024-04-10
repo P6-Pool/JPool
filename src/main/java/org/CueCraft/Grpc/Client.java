@@ -3,11 +3,11 @@ package org.CueCraft.Grpc;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import org.CueCraft.FastFiz.Ball;
-import org.CueCraft.FastFiz.TableState;
-import org.CueCraft.Geometry.ShotStep;
-import org.CueCraft.Geometry.Vector2d;
-import org.CueCraft.protobuf.JPoolAPIGrpc;
+import org.CueCraft.Pool.Ball;
+import org.CueCraft.Pool.Table;
+import org.CueCraft.ShotGenerator.ShotStep;
+import org.CueCraft.ShotGenerator.Vector2d;
+import org.CueCraft.protobuf.CueCanvasAPIGrpc;
 import org.CueCraft.protobuf.ShowShotsRequest;
 import org.CueCraft.protobuf.Shot;
 import org.CueCraft.protobuf.ShotType;
@@ -17,16 +17,16 @@ import java.util.ArrayList;
 
 public class Client {
     ManagedChannel channel;
-    JPoolAPIGrpc.JPoolAPIBlockingStub stub;
+    CueCanvasAPIGrpc.CueCanvasAPIBlockingStub stub;
 
     public Client(String address, int port) {
         channel = ManagedChannelBuilder.forAddress(address, port)
                 .usePlaintext()
                 .build();
-        stub = JPoolAPIGrpc.newBlockingStub(channel);
+        stub = CueCanvasAPIGrpc.newBlockingStub(channel);
     }
 
-    public Empty showShots(ArrayList<ShotStep> shots, TableState tableState) {
+    public Empty showShots(ArrayList<ShotStep> shots, Table table) {
 
         ArrayList<Shot> serShots = new ArrayList<>();
 
@@ -36,7 +36,7 @@ public class Client {
 
         ShowShotsRequest req = ShowShotsRequest.newBuilder()
                 .addAllShots(serShots)
-                .setTableState(ConvertTableStateToSerTableState(tableState))
+                .setTableState(ConvertTableStateToSerTableState(table))
                 .build();
 
         return stub.showShots(req);
@@ -71,10 +71,10 @@ public class Client {
         return Point.newBuilder().setX(vec.x).setY(vec.y).build();
     }
 
-    private org.CueCraft.protobuf.TableState ConvertTableStateToSerTableState(TableState tableState) {
+    private org.CueCraft.protobuf.TableState ConvertTableStateToSerTableState(Table table) {
         ArrayList<org.CueCraft.protobuf.Ball> serBalls = new ArrayList<>();
 
-        for (Ball ball : tableState.balls) {
+        for (Ball ball : table.balls) {
             serBalls.add(ConvertBallToSerBall(ball));
         }
 

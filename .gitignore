@@ -40,3 +40,5 @@ build/
 settings.xml
 
 .idea
+
+src/main/resources/lib/libfastfiz.so

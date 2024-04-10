@@ -1,6 +1,6 @@
-package org.CueCraft.FastFiz;
+package org.CueCraft.Pool;
 
-import org.CueCraft.Geometry.Vector2d;
+import org.CueCraft.ShotGenerator.Vector2d;
 
 public class Pocket {
     public enum PocketType {NE_Pocket, E_Pocket, SE_Pocket, SW_Pocket, W_Pocket, NW_Pocket}

@@ -1,22 +1,28 @@
 package org.CueCraft;
 
-import org.CueCraft.FastFiz.TableState;
+import org.CueCraft.Pool.Table;
 import org.CueCraft.Grpc.Client;
-import org.CueCraft.Geometry.ShotStep;
-import org.CueCraft.Geometry.ShotTree;
+import org.CueCraft.ShotGenerator.ShotStep;
+import org.CueCraft.ShotGenerator.ShotGenerator;
 
 import java.util.ArrayList;
 
-
 public class Main
 {
+    static {
+        String workingDir = System.getProperty("user.dir");
+        String libraryPath = workingDir + "/src/main/resources/lib/libfastfiz.so";
+        System.load(libraryPath);
+    }
+
     public static void main( String[] args )
     {
-//        Client clientP5 = new Client("localhost", 50051);
-        Client clientGG = new Client("localhost", 50052);
-        TableState activeTableState = TableState.randomTableState(15);
-        ArrayList<ShotStep> shots = ShotTree.generateShotTree(activeTableState, 5, TableState.playerPattern.SOLID);
-//        clientP5.showShots(shots, activeTableState);
-        clientGG.showShots(shots, activeTableState);
+        Client client = new Client("localhost", 50052);
+
+        Table activeTable = Table.randomTableState(15);
+
+        ArrayList<ShotStep> shots = ShotGenerator.generateShots(activeTable, 5, Table.playerPattern.SOLID);
+
+        client.showShots(shots, activeTable);
     }
 }

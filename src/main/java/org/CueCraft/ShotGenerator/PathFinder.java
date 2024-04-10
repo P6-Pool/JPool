@@ -1,7 +1,7 @@
-package org.CueCraft.Geometry;
+package org.CueCraft.ShotGenerator;
 
-import org.CueCraft.FastFiz.Ball;
-import org.CueCraft.FastFiz.TableState;
+import org.CueCraft.Pool.Ball;
+import org.CueCraft.Pool.Table;
 import org.javatuples.Pair;
 
 import java.util.*;
@@ -22,15 +22,15 @@ public class PathFinder {
         Vector2d ghostBallPos = ballPos.copy();
 
         if (tableIdx.x % 2 == 0) {
-            ghostBallPos.x += tableIdx.x * TableState.width;
+            ghostBallPos.x += tableIdx.x * Table.width;
         } else {
-            ghostBallPos.x = (tableIdx.x + 1) * TableState.width - ballPos.x;
+            ghostBallPos.x = (tableIdx.x + 1) * Table.width - ballPos.x;
         }
 
         if (tableIdx.y % 2 == 0) {
-            ghostBallPos.y += tableIdx.y * TableState.length;
+            ghostBallPos.y += tableIdx.y * Table.length;
         } else {
-            ghostBallPos.y = (tableIdx.y + 1) * TableState.length - ballPos.y;
+            ghostBallPos.y = (tableIdx.y + 1) * Table.length - ballPos.y;
         }
 
         ghostBallPos = ghostBallPos.sub(tableIdx.mult(Ball.radius * 2));
@@ -39,17 +39,17 @@ public class PathFinder {
     }
 
     public static Vector2d getBackProjectedBallPos(Vector2d projectedBallPos) {
-        double newX = (projectedBallPos.x - Ball.radius) % TableState.innerWidth + Ball.radius;
-        double newY = (projectedBallPos.y - Ball.radius) % TableState.innerLength + Ball.radius;
+        double newX = (projectedBallPos.x - Ball.radius) % Table.innerWidth + Ball.radius;
+        double newY = (projectedBallPos.y - Ball.radius) % Table.innerLength + Ball.radius;
 
-        int tableIdxX = (int) ((projectedBallPos.x - Ball.radius) / TableState.innerWidth);
-        int tableIdxY = (int) ((projectedBallPos.y - Ball.radius) / TableState.innerLength);
+        int tableIdxX = (int) ((projectedBallPos.x - Ball.radius) / Table.innerWidth);
+        int tableIdxY = (int) ((projectedBallPos.y - Ball.radius) / Table.innerLength);
 
         if (tableIdxX % 2 == 1) {
-            newX = TableState.width - newX;
+            newX = Table.width - newX;
         }
         if (tableIdxY % 2 == 1) {
-            newY = TableState.length - newY;
+            newY = Table.length - newY;
         }
 
         return new Vector2d(newX, newY);
@@ -245,11 +245,11 @@ public class PathFinder {
     public static ArrayList<Vector2d> getHitProjections(Vector2d startPos, Vector2d endPos) {
         enum HitType {RIGHT_VERT_HIT, LEFT_VERT_HIT, TOP_HOR_HIT, BOTTOM_HOR_HIT}
 
-        int numPosVertHits = (int) ((endPos.x - Ball.radius) / TableState.innerWidth);
-        int numNegVertHits = (int) (1 + (-endPos.x + Ball.radius) / TableState.innerWidth);
+        int numPosVertHits = (int) ((endPos.x - Ball.radius) / Table.innerWidth);
+        int numNegVertHits = (int) (1 + (-endPos.x + Ball.radius) / Table.innerWidth);
 
-        int numPosHorHits = (int) ((endPos.y - Ball.radius) / TableState.innerLength);
-        int numNegHorHits = (int) (1 + (-endPos.y + Ball.radius) / TableState.innerLength);
+        int numPosHorHits = (int) ((endPos.y - Ball.radius) / Table.innerLength);
+        int numNegHorHits = (int) (1 + (-endPos.y + Ball.radius) / Table.innerLength);
 
         ArrayList<Pair<Vector2d, HitType>> intersections = new ArrayList<>() {{
             add(new Pair<>(endPos, null));
@@ -257,28 +257,28 @@ public class PathFinder {
         Vector2d diff = endPos.sub(startPos);
 
         for (int i = 0; i < numPosVertHits; i++) {
-            Vector2d linePoint = new Vector2d(TableState.width - Ball.radius + TableState.innerWidth * i, 0);
+            Vector2d linePoint = new Vector2d(Table.width - Ball.radius + Table.innerWidth * i, 0);
             Vector2d lineVec = new Vector2d(0, 1);
             Vector2d intersection = getLineLineIntersection(linePoint, lineVec, startPos, diff);
             intersections.add(new Pair<>(intersection, i % 2 == 0 ? HitType.RIGHT_VERT_HIT : HitType.LEFT_VERT_HIT));
         }
 
         for (int i = 0; i < numNegVertHits; i++) {
-            Vector2d linePoint = new Vector2d(Ball.radius - TableState.innerWidth * i, 0);
+            Vector2d linePoint = new Vector2d(Ball.radius - Table.innerWidth * i, 0);
             Vector2d lineVec = new Vector2d(0, 1);
             Vector2d intersection = getLineLineIntersection(linePoint, lineVec, startPos, diff);
             intersections.add(new Pair<>(intersection, i % 2 == 0 ? HitType.LEFT_VERT_HIT : HitType.RIGHT_VERT_HIT));
         }
 
         for (int i = 0; i < numPosHorHits; i++) {
-            Vector2d linePoint = new Vector2d(0, TableState.length - Ball.radius + TableState.innerLength * i);
+            Vector2d linePoint = new Vector2d(0, Table.length - Ball.radius + Table.innerLength * i);
             Vector2d lineVec = new Vector2d(1, 0);
             Vector2d intersection = getLineLineIntersection(linePoint, lineVec, startPos, diff);
             intersections.add(new Pair<>(intersection, i % 2 == 0 ? HitType.TOP_HOR_HIT : HitType.BOTTOM_HOR_HIT));
         }
 
         for (int i = 0; i < numNegHorHits; i++) {
-            Vector2d linePoint = new Vector2d(0, Ball.radius - TableState.innerLength * i);
+            Vector2d linePoint = new Vector2d(0, Ball.radius - Table.innerLength * i);
             Vector2d lineVec = new Vector2d(1, 0);
             Vector2d intersection = getLineLineIntersection(linePoint, lineVec, startPos, diff);
             intersections.add(new Pair<>(intersection, i % 2 == 0 ? HitType.BOTTOM_HOR_HIT : HitType.TOP_HOR_HIT));

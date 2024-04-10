@@ -1,4 +1,4 @@
-package org.CueCraft.Geometry;
+package org.CueCraft.ShotGenerator;
 
 import java.util.Locale;
 
