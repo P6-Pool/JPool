@@ -9,7 +9,6 @@
 package JFastfiz;
 
 public class fastfizJNI {
-  public final static native int foo();
   public final static native void ShotParams_a_set(long jarg1, ShotParams jarg1_, double jarg2);
   public final static native double ShotParams_a_get(long jarg1, ShotParams jarg1_);
   public final static native void ShotParams_b_set(long jarg1, ShotParams jarg1_, double jarg2);
@@ -262,9 +261,32 @@ public class fastfizJNI {
   public final static native int GameState_executeShot__SWIG_1(long jarg1, GameState jarg1_, long jarg2, GameShot jarg2_);
   public final static native void delete_GameState(long jarg1);
   public final static native String getRulesVersion();
+  public final static native int NT_GAUSSIAN_get();
+  public final static native long Noise_Factory(String jarg1);
+  public final static native String Noise_toString(long jarg1, Noise jarg1_);
+  public final static native int Noise_noiseType(long jarg1, Noise jarg1_);
+  public final static native void Noise_applyNoise(long jarg1, Noise jarg1_, long jarg2, ShotParams jarg2_);
+  public final static native void delete_Noise(long jarg1);
+  public final static native long new_NoNoise__SWIG_0();
+  public final static native long new_NoNoise__SWIG_1(long jarg1);
+  public final static native long new_NoNoise__SWIG_2(String jarg1);
+  public final static native int NoNoise_noiseType(long jarg1, NoNoise jarg1_);
+  public final static native void NoNoise_applyNoise(long jarg1, NoNoise jarg1_, long jarg2, ShotParams jarg2_);
+  public final static native void delete_NoNoise(long jarg1);
+  public final static native long new_GaussianNoise__SWIG_0(double jarg1);
+  public final static native long new_GaussianNoise__SWIG_1();
+  public final static native long new_GaussianNoise__SWIG_2(double jarg1, double jarg2, double jarg3, double jarg4, double jarg5);
+  public final static native long new_GaussianNoise__SWIG_3(long jarg1);
+  public final static native long new_GaussianNoise__SWIG_4(String jarg1);
+  public final static native int GaussianNoise_noiseType(long jarg1, GaussianNoise jarg1_);
+  public final static native void GaussianNoise_toStream(long jarg1, GaussianNoise jarg1_, long jarg2);
+  public final static native void GaussianNoise_applyNoise(long jarg1, GaussianNoise jarg1_, long jarg2, ShotParams jarg2_);
+  public final static native void delete_GaussianNoise(long jarg1);
   public final static native long StateChangeEvent_SWIGUpcast(long jarg1);
   public final static native long BallCollisionEvent_SWIGUpcast(long jarg1);
   public final static native long RailCollisionEvent_SWIGUpcast(long jarg1);
   public final static native long PocketedEvent_SWIGUpcast(long jarg1);
   public final static native long CueStrikeEvent_SWIGUpcast(long jarg1);
+  public final static native long NoNoise_SWIGUpcast(long jarg1);
+  public final static native long GaussianNoise_SWIGUpcast(long jarg1);
 }

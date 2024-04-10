@@ -9,10 +9,6 @@
 package JFastfiz;
 
 public class fastfiz {
-  public static int foo() {
-    return fastfizJNI.foo();
-  }
-
   public static StateChangeEvent eventToStateChangeEvent(Event event) {
     return new StateChangeEvent(fastfizJNI.eventToStateChangeEvent(Event.getCPtr(event), event), false);
   }

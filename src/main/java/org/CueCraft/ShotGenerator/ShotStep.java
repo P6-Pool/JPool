@@ -72,6 +72,19 @@ public class ShotStep {
         );
     }
 
+    public double getShotAngle() {
+        Vector2d diff = ghostBallPos.sub(posB1);
+        Vector2d xAxis = new Vector2d(1, 0);
+
+        double angle = (Math.acos(diff.dot(xAxis) / (diff.mag() * xAxis.mag())) * 180 / Math.PI) + 180 % 360;
+
+        if (diff.y < 0) {
+            angle = 360 - angle;
+        }
+
+        return angle;
+    }
+
     public static boolean ballInvolvedInShot(ShotStep shot, int ballNumber) {
         if (shot.b1 == ballNumber || shot.b2 == ballNumber) {
             return true;

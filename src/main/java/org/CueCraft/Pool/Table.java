@@ -1,5 +1,6 @@
 package org.CueCraft.Pool;
 
+import JFastfiz.TableState;
 import org.CueCraft.ShotGenerator.Vector2d;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class Table {
     public static double cornerPocketWidth = 0.11;
     public static double sidePocketWidth = 0.12;
 
-    public enum playerPattern {STRIPED, SOLID, NONE}
+    public enum PlayerPattern {STRIPED, SOLID, NONE}
 
     public Table(ArrayList<Ball> balls) {
         this.balls = balls;
@@ -82,5 +83,15 @@ public class Table {
                     add(new Ball(2, 1, new Vector2d(0.1, 0.04)));
                 }}
         );
+    }
+
+    public TableState toTableState(){
+        TableState ts = new TableState();
+        for(Ball ball : this.balls){
+            JFastfiz.Ball.Type bType = JFastfiz.Ball.Type.swigToEnum(ball.number);
+            JFastfiz.Ball.State bState = JFastfiz.Ball.State.swigToEnum(ball.state);
+            ts.setBall(bType, bState, ball.pos.x, ball.pos.y);
+        }
+        return ts;
     }
 }

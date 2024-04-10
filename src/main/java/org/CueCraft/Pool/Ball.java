@@ -7,17 +7,17 @@ public class Ball {
     public int state; // 1 if in play, 0 otherwise
     public static double radius = 0.028575;
     public Vector2d pos;
-    public Table.playerPattern pattern;
+    public Table.PlayerPattern pattern;
 
     public Ball(int number, int state, Vector2d pos) {
         this.number = number;
         this.state = state;
         this.pos = pos.copy();
-        this.pattern = number > 8 ? Table.playerPattern.STRIPED : Table.playerPattern.SOLID;
+        this.pattern = number > 8 ? Table.PlayerPattern.STRIPED : Table.PlayerPattern.SOLID;
     }
 
     public static boolean notInPlay(Ball b) {
-        return b.state == 2;
+        return b.state == 0;
     }
 
     public Ball copy() {

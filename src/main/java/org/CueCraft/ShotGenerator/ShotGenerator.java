@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShotGenerator {
-    static public ArrayList<ShotStep> generateShots(Table table, int depth, Table.playerPattern playerPattern) {
+
+    static public ArrayList<ShotStep> generateShots(Table table, int depth, Table.PlayerPattern playerPattern) {
         if (depth < 2) {
             return new ArrayList<>();
         }
@@ -44,7 +45,7 @@ public class ShotGenerator {
         }};
     }
 
-    private static ArrayList<ShotStep> generateRailShots(Table table, ShotStep targetStep, Table.playerPattern playerPattern, int numRailHits) {
+    private static ArrayList<ShotStep> generateRailShots(Table table, ShotStep targetStep, Table.PlayerPattern playerPattern, int numRailHits) {
         ArrayList<ShotStep> newStepTrees = new ArrayList<>();
         ArrayList<Vector2d> tableIdxes = PathFinder.getTableIdxes(numRailHits);
 
@@ -187,7 +188,7 @@ public class ShotGenerator {
         return newStepTrees;
     }
 
-    private static ArrayList<ShotStep> generateBallBoths(Table table, ShotStep targetStep, Table.playerPattern playerPattern) {
+    private static ArrayList<ShotStep> generateBallBoths(Table table, ShotStep targetStep, Table.PlayerPattern playerPattern) {
         ArrayList<ShotStep> newStepTrees = new ArrayList<>();
 
         for (Ball ball : table.balls) {
@@ -250,7 +251,7 @@ public class ShotGenerator {
         return newStepTrees;
     }
 
-    private static ArrayList<ShotStep> generateKissBalls(Table table, ShotStep targetStep, Table.playerPattern playerPattern) {
+    private static ArrayList<ShotStep> generateKissBalls(Table table, ShotStep targetStep, Table.PlayerPattern playerPattern) {
         ArrayList<ShotStep> newStepTrees = new ArrayList<>();
 
         for (Ball ball : table.balls) {
@@ -344,7 +345,7 @@ public class ShotGenerator {
         return undoneShots;
     }
 
-    private static boolean invalidBallBothBall(ShotStep next, Table table, Ball ball, Table.playerPattern playerPattern) {
+    private static boolean invalidBallBothBall(ShotStep next, Table table, Ball ball, Table.PlayerPattern playerPattern) {
 
         boolean ballNotInPlay = ball.state == 0;
 
