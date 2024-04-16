@@ -60,7 +60,17 @@ public class PathFinder {
         double hyp = diff.mag();
         double adj = Ball.radius * 2;
 
+        if (hyp <= adj) {
+            return null;
+        }
+
         double angle = Math.acos(adj / hyp);
+        if (Double.isNaN(angle)) {
+            System.out.println(hyp + "  " + adj);
+            System.out.println(ballToBeShotPos + "  " + ballToBeHitPos);
+        }
+        assert !Double.isNaN(angle);
+
         angle *= isLeft ? -1 : 1;
 
         return diff.normalize().rotateClockwise(angle).mult(adj / 2);
@@ -81,7 +91,13 @@ public class PathFinder {
 
         while (depth-- > 0) {
             Ball intersectingBall = intersectingBalls.getFirst();
+
             Vector2d kiss = getKissTargetPos(mainBallPos, intersectingBall.pos, isLeft);
+
+            if (kiss == null) {
+                return null;
+            }
+
             Vector2d adjustedLinePointQ = intersectingBall.pos.add(kiss);
             Vector2d adjustedLinePointP = mainBallPos.sub(kiss);
 
@@ -282,6 +298,12 @@ public class PathFinder {
             Vector2d lineVec = new Vector2d(1, 0);
             Vector2d intersection = getLineLineIntersection(linePoint, lineVec, startPos, diff);
             intersections.add(new Pair<>(intersection, i % 2 == 0 ? HitType.BOTTOM_HOR_HIT : HitType.TOP_HOR_HIT));
+        }
+
+        for (Pair<Vector2d, HitType> intersection : intersections) {
+            if (intersection.getValue0() == null) {
+                return null;
+            }
         }
 
         intersections.sort(Comparator.comparing((Pair<Vector2d, HitType> a) -> a.getValue0().sub(startPos)));

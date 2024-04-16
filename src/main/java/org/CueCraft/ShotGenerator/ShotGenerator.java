@@ -1,5 +1,7 @@
 package org.CueCraft.ShotGenerator;
 
+import JFastfiz.TableState;
+import org.CueCraft.Grpc.Client;
 import org.CueCraft.Pool.Ball;
 import org.CueCraft.Pool.Table;
 
@@ -8,7 +10,9 @@ import java.util.List;
 
 public class ShotGenerator {
 
-    static public ArrayList<ShotStep> generateShots(Table table, int depth, Table.PlayerPattern playerPattern) {
+    static public ArrayList<ShotStep> generateShots(TableState tableState, int depth, Table.PlayerPattern playerPattern) {
+        Table table = Table.fromTableState(tableState);
+
         if (depth < 2) {
             return new ArrayList<>();
         }
@@ -126,6 +130,9 @@ public class ShotGenerator {
                 ArrayList<Vector2d> railLeftMostHits = PathFinder.getHitProjections(ball.pos, adjustedProjectedLeftMostTarget);
                 ArrayList<Vector2d> railRightMostHits = PathFinder.getHitProjections(ball.pos, adjustedProjectedRightMostTarget);
 
+                if (railLeftMostHits == null || railRightMostHits == null) {
+                    continue;
+                }
 
                 assert Math.abs(railLeftMostHits.size() - railRightMostHits.size()) < 2;
 
@@ -178,7 +185,7 @@ public class ShotGenerator {
                         newType = ball.number == 0 ? ShotStep.ShotStepType.CUE_STRIKE : ShotStep.ShotStepType.BALL_BOTH;
                     }
 
-                    prev = new ShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, ball.number, ball.number, next.depth + 1);
+                    prev = new ShotStep(newType, next, ball.pos, newGhostBallPos, newLeftMost, newRightMost, ball.number, ball.number, next.depth + 1, next.pocket);
                     next = prev;
                 }
 
@@ -243,7 +250,7 @@ public class ShotGenerator {
                 continue;
             }
 
-            ShotStep newStepTree = new ShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, newB1, ball.number, next.depth + 1);
+            ShotStep newStepTree = new ShotStep(newType, next, ball.pos, newGhostBallPos, newLeftMost, newRightMost, newB1, ball.number, next.depth + 1, next.pocket);
 
             newStepTrees.add(newStepTree);
         }
@@ -289,8 +296,15 @@ public class ShotGenerator {
             return null;
         }
 
-        Vector2d newLeftMost = ball.pos.add(PathFinder.getKissTargetPos(next.rightMost, ball.pos, !isLeft).mult(2));
-        Vector2d newRightMost = ball.pos.add(PathFinder.getKissTargetPos(next.leftMost, ball.pos, !isLeft).mult(2));
+        Vector2d rightKiss = PathFinder.getKissTargetPos(next.rightMost, ball.pos, !isLeft);
+        Vector2d leftKiss = PathFinder.getKissTargetPos(next.leftMost, ball.pos, !isLeft);
+
+        if (rightKiss == null || leftKiss == null) {
+            return null;
+        }
+
+        Vector2d newLeftMost = ball.pos.add(rightKiss.mult(2));
+        Vector2d newRightMost = ball.pos.add(leftKiss.mult(2));
         ShotStep.ShotStepType newType = isLeft ? ShotStep.ShotStepType.KISS_LEFT : ShotStep.ShotStepType.KISS_RIGHT;
         Vector2d newGhostBallPos = getGhostBall(newType, newLeftMost, newRightMost, ball.pos);
 
@@ -322,7 +336,7 @@ public class ShotGenerator {
             return null;
         }
 
-        return new ShotStep(newType, next, null, ball.pos, newGhostBallPos, newLeftMost, newRightMost, -1, ball.number, next.depth + 1);
+        return new ShotStep(newType, next, ball.pos, newGhostBallPos, newLeftMost, newRightMost, -1, ball.number, next.depth + 1, next.pocket);
     }
 
     private static ArrayList<ShotStep> getDoneShots(ArrayList<ShotStep> shots) {
@@ -350,14 +364,37 @@ public class ShotGenerator {
         boolean ballNotInPlay = ball.state == 0;
 
         boolean pocketedCueBall = next.type == ShotStep.ShotStepType.POCKET && ball.number == 0;
-        boolean pocketedOpponentBall = next.type == ShotStep.ShotStepType.POCKET && ball.pattern != playerPattern;
 
-        int numPlayerBallsLeft = (int) table.balls.stream().filter(b -> b.pattern == playerPattern && b.number != 0 && b.number != 8 && b.state != 0).count();
+        int numPlayerBallsLeft = (int) table.balls.stream().filter(b -> b.state == 1 && isFriendlyBall(playerPattern, b)).count();
         boolean pocketed8BallEarly = next.type == ShotStep.ShotStepType.POCKET && ball.number == 8 && numPlayerBallsLeft != 0;
+
+        boolean pocketedOpponentBall = next.type == ShotStep.ShotStepType.POCKET && isOpponentBall(playerPattern, ball);
 
         boolean ballAlreadyInShot = ShotStep.ballInvolvedInShot(next, ball.number);
 
         return ballNotInPlay || pocketedCueBall || pocketedOpponentBall || pocketed8BallEarly || ballAlreadyInShot;
+    }
+
+    private static boolean isFriendlyBall(Table.PlayerPattern playerPattern , Ball ball) {
+        if (ball.number == 0 ||ball.number == 8) {
+            return false;
+        }
+        if (playerPattern == Table.PlayerPattern.NONE) {
+            return true;
+        } else {
+            return playerPattern == ball.pattern;
+        }
+    }
+
+    private static boolean isOpponentBall(Table.PlayerPattern playerPattern , Ball ball) {
+        if (ball.number == 0 || ball.number == 8) {
+            return false;
+        }
+        if (playerPattern == Table.PlayerPattern.NONE) {
+            return false;
+        } else {
+            return playerPattern != ball.pattern;
+        }
     }
 
     private static Vector2d getGhostBall(ShotStep.ShotStepType type, Vector2d leftMost, Vector2d rightMost, Vector2d ballPos) {
@@ -369,4 +406,5 @@ public class ShotGenerator {
             return ballPos.add(offset);
         }
     }
+
 }

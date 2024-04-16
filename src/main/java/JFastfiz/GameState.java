@@ -63,6 +63,22 @@ public class GameState {
     return (cPtr == 0) ? null : new GameState(cPtr, false);
   }
 
+  public boolean isTerminal() {
+    return fastfizJNI.GameState_isTerminal(swigCPtr, this);
+  }
+
+  public boolean positionRequired() {
+    return fastfizJNI.GameState_positionRequired(swigCPtr, this);
+  }
+
+  public boolean decisionAllowed() {
+    return fastfizJNI.GameState_decisionAllowed(swigCPtr, this);
+  }
+
+  public boolean shotRequired() {
+    return fastfizJNI.GameState_shotRequired(swigCPtr, this);
+  }
+
   public String toString() {
     return fastfizJNI.GameState_toString(swigCPtr, this);
   }

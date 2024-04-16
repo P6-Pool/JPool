@@ -7,10 +7,9 @@ public class ShotStep {
     public static int idCounter = 0;
     public enum ShotStepType {CUE_STRIKE, POCKET, RAIL, STRIKE, KISS_LEFT, KISS_RIGHT, BALL_BOTH}
 
-    public ShotStep(ShotStepType type, ShotStep next, ShotStep branch, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2, int depth) {
+    public ShotStep(ShotStepType type, ShotStep next, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2, int depth, Pocket.PocketType pocket) {
         this.type = type;
         this.next = next;
-        this.branch = branch;
         this.posB1 = posB1;
         this.ghostBallPos = ghostBall;
         this.leftMost = leftMost;
@@ -19,6 +18,7 @@ public class ShotStep {
         this.b2 = b2;
         this.id = idCounter++;
         this.depth = depth;
+        this.pocket = pocket;
     }
 
     public static ShotStep ShotPocketStep(Pocket pocket) {
@@ -47,13 +47,13 @@ public class ShotStep {
                 ShotStepType.POCKET,
                 null,
                 null,
-                null,
                 pocket.center,
                 pocket.leftMost.add(leftMostOffset),
                 pocket.rightMost.add(rightMostOffset),
                 -1,
                 -1,
-                0
+                0,
+                pocket.type
         );
     }
 
@@ -61,14 +61,14 @@ public class ShotStep {
         return new ShotStep(
                 type,
                 next,
-                branch,
                 posB1 == null ? null : posB1.copy(),
                 ghostBallPos.copy(),
                 leftMost.copy(),
                 rightMost.copy(),
                 b1,
                 b2,
-                depth
+                depth,
+                pocket
         );
     }
 
@@ -83,6 +83,20 @@ public class ShotStep {
         }
 
         return angle;
+    }
+
+    public int getPocketedBallNumber() {
+        ShotStep curShot = this;
+        int number = -1;
+
+        while(curShot.next != null) {
+            if (curShot.type == ShotStepType.BALL_BOTH) {
+                number = curShot.b2;
+            }
+            curShot = curShot.next;
+        }
+
+        return number;
     }
 
     public static boolean ballInvolvedInShot(ShotStep shot, int ballNumber) {
@@ -124,4 +138,5 @@ public class ShotStep {
     public int b2;
     public int id;
     public int depth;
+    public Pocket.PocketType pocket;
 }

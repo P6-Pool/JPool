@@ -23,4 +23,10 @@ public class Ball {
     public Ball copy() {
         return new Ball(number, state, pos.copy());
     }
+
+    public static Ball fromJBall(JFastfiz.Ball b) {
+        int newState = b.getState().swigValue() == 1 ? 1 : 0;
+        Vector2d newPos = new Vector2d(b.getPos().getX(), b.getPos().getY());
+        return new Ball(b.getID().swigValue(), newState, newPos);
+    }
 }

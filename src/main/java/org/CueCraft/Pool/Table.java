@@ -94,4 +94,19 @@ public class Table {
         }
         return ts;
     }
+
+    public static Table fromTableState(TableState tableState){
+        ArrayList<Ball> balls = new ArrayList<>();
+        for(int i = 0; i <= 15; i++){
+            JFastfiz.Ball ball = tableState.getBall(JFastfiz.Ball.Type.swigToEnum(i));
+
+            int newBallNumber = ball.getID().swigValue();
+            int newBallState = ball.getState() == JFastfiz.Ball.State.STATIONARY ? 1 : 0;
+            Vector2d newBallPos = new Vector2d(ball.getPos().getX(), ball.getPos().getY());
+            Ball newBall = new Ball(newBallNumber, newBallState, newBallPos);
+            balls.add(newBall);
+        }
+
+        return new Table(balls);
+    }
 }

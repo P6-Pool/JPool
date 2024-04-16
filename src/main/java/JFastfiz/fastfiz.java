@@ -8,7 +8,7 @@
 
 package JFastfiz;
 
-public class fastfiz {
+public class fastfiz implements fastfizConstants {
   public static StateChangeEvent eventToStateChangeEvent(Event event) {
     return new StateChangeEvent(fastfizJNI.eventToStateChangeEvent(Event.getCPtr(event), event), false);
   }

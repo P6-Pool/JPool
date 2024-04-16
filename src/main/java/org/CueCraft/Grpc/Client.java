@@ -1,5 +1,9 @@
 package org.CueCraft.Grpc;
 
+import JFastfiz.GameShot;
+import JFastfiz.ShotParams;
+import JFastfiz.ShotResult;
+import JFastfiz.TableState;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -12,6 +16,7 @@ import org.CueCraft.protobuf.ShowShotsRequest;
 import org.CueCraft.protobuf.Shot;
 import org.CueCraft.protobuf.ShotType;
 import org.CueCraft.protobuf.Point;
+import org.javatuples.Quartet;
 
 import java.util.ArrayList;
 
@@ -31,51 +36,65 @@ public class Client {
         ArrayList<Shot> serShots = new ArrayList<>();
 
         for (ShotStep shot : shots) {
-            serShots.add(convertShotToSerShot(shot));
+            serShots.add(serializeShot(shot));
         }
 
         ShowShotsRequest req = ShowShotsRequest.newBuilder()
                 .addAllShots(serShots)
-                .setTableState(ConvertTableStateToSerTableState(table))
+                .setTableState(serializeTable(table))
                 .build();
 
         return stub.showShots(req);
+    }
+
+    public Empty showGame(ArrayList<Quartet<String, TableState, GameShot, ShotResult>> turnHistory) {
+        ArrayList<org.CueCraft.protobuf.GameTurn> serTurns = new ArrayList<>();
+
+        for (var turn : turnHistory) {
+            serTurns.add(serializeGameTurn(turn));
+        }
+
+        org.CueCraft.protobuf.ShowGameRequest req = org.CueCraft.protobuf.ShowGameRequest.newBuilder()
+                .addAllTurnHistory(serTurns)
+                .build();
+
+        return stub.showGame(req);
     }
 
     public void shutdown() {
         channel.shutdown();
     }
 
-    private Shot convertShotToSerShot(ShotStep shot) {
+    private Shot serializeShot(ShotStep shot) {
         Shot.Builder builder = Shot.newBuilder()
-                .setType(convertJShotStepTypeToSerShotType(shot.type))
+                .setType(serializeShotType(shot.type))
                 .setB1(shot.b1)
                 .setB2(shot.b2)
                 .setId(shot.id);
 
-        if (shot.next != null) builder.setNext(convertShotToSerShot(shot.next));
-        if (shot.branch != null) builder.setBranch(convertShotToSerShot(shot.branch));
-        if (shot.posB1 != null) builder.setPosB1(convertVector2DToSerPoint(shot.posB1));
-        if (shot.ghostBallPos != null) builder.setGhostBall(convertVector2DToSerPoint(shot.ghostBallPos));
-        if (shot.leftMost != null) builder.setLeftMost(convertVector2DToSerPoint(shot.leftMost));
-        if (shot.rightMost != null) builder.setRightMost(convertVector2DToSerPoint(shot.rightMost));
+        if (shot.next != null) builder.setNext(serializeShot(shot.next));
+        if (shot.branch != null) builder.setBranch(serializeShot(shot.branch));
+        if (shot.posB1 != null) builder.setPosB1(serializeVector2d(shot.posB1));
+        if (shot.ghostBallPos != null) builder.setGhostBall(serializeVector2d(shot.ghostBallPos));
+        if (shot.leftMost != null) builder.setLeftMost(serializeVector2d(shot.leftMost));
+        if (shot.rightMost != null) builder.setRightMost(serializeVector2d(shot.rightMost));
 
         return builder.build();
     }
 
-    private ShotType convertJShotStepTypeToSerShotType(ShotStep.ShotStepType type) {
+    private ShotType serializeShotType(ShotStep.ShotStepType type) {
         return ShotType.forNumber(type.ordinal());
     }
 
-    private Point convertVector2DToSerPoint(Vector2d vec) {
+    private Point serializeVector2d(Vector2d vec) {
         return Point.newBuilder().setX(vec.x).setY(vec.y).build();
     }
 
-    private org.CueCraft.protobuf.TableState ConvertTableStateToSerTableState(Table table) {
+    private org.CueCraft.protobuf.TableState serializeTable(Table table) {
         ArrayList<org.CueCraft.protobuf.Ball> serBalls = new ArrayList<>();
 
         for (Ball ball : table.balls) {
-            serBalls.add(ConvertBallToSerBall(ball));
+            serBalls.add(serializeBall(ball));
         }
 
         return org.CueCraft.protobuf.TableState.newBuilder()
@@ -83,11 +102,40 @@ public class Client {
                 .build();
     }
 
-    private org.CueCraft.protobuf.Ball ConvertBallToSerBall(Ball ball) {
+    private org.CueCraft.protobuf.Ball serializeBall(Ball ball) {
         return org.CueCraft.protobuf.Ball.newBuilder()
-                .setPos(convertVector2DToSerPoint(ball.pos))
+                .setPos(serializeVector2d(ball.pos))
                 .setNumber(ball.number)
                 .setState(ball.state)
+                .build();
+    }
+
+    private org.CueCraft.protobuf.GameTurn serializeGameTurn(Quartet<String, TableState, GameShot, ShotResult> turn) {
+        return org.CueCraft.protobuf.GameTurn.newBuilder()
+                .setAgentName(turn.getValue0())
+                .setTableState(serializeTable(Table.fromTableState(turn.getValue1())))
+                .setGameShot(serializeGameShot(turn.getValue2()))
+                .setShotResult(turn.getValue3().toString())
+                .build();
+    }
+
+    private org.CueCraft.protobuf.GameShot serializeGameShot(GameShot gameShot) {
+        return org.CueCraft.protobuf.GameShot.newBuilder()
+                .setBallTarget(gameShot.getBall().toString())
+                .setPocketTarget(gameShot.getPocket().toString())
+                .setCuePos(serializeVector2d(new Vector2d(gameShot.getCue_x(), gameShot.getCue_y())))
+                .setDecision(gameShot.getDecision().toString())
+                .setShotParams(serializeShotParams(gameShot.getParams()))
+                .build();
+    }
+
+    private org.CueCraft.protobuf.ShotParams serializeShotParams(ShotParams gameShot) {
+        return org.CueCraft.protobuf.ShotParams.newBuilder()
+                .setA(gameShot.getA())
+                .setB(gameShot.getB())
+                .setPhi(gameShot.getPhi())
+                .setTheta(gameShot.getTheta())
+                .setV(gameShot.getV())
                 .build();
     }
 }
