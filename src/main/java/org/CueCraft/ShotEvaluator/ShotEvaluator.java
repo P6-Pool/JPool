@@ -125,6 +125,10 @@ public class ShotEvaluator {
     }
 
     public static double rewardShotSimple(Shot shotEvent, Table.PlayerPattern playerPattern, TableState tableStateBefore) {
+        //TODO ensure we pocket the desired ball in the desired hole
+        //TODO ensure that we pocket multiple balls of the same type
+        //TODO ensure that after break we aim for the type with fewest balls
+
         Table table = Table.fromTableState(tableStateBefore);
 
         int numFriendlyPocketed = 0;

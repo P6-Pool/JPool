@@ -8,24 +8,30 @@ import org.javatuples.Triplet;
 import java.util.ArrayList;
 
 public class Game {
-    Agent player1, player2, activeAgent;
-    Noise noise;
+    public enum WinType {WON_BY_POCKETING_EIGHTBALL, WON_BY_OPPONENT_POCKETING_EIGHTBALL, WON_BY_OPPONENT_CONCEDING, WON_BY_OPPONENT_TIMING_OUT, WON_BY_OPPONENT_BAD_PARAMS}
+    GameParams gameParams;
     EightBallState gameState;
-    ArrayList<Quartet<String, TableState, GameShot, ShotResult>> turnHistory = new ArrayList<>();
+    Noise noise;
+    ArrayList<Turn> turnHistory;
+    Agent activeAgent;
+    RealTimeStopwatch shotStopwatch, gameStopwatch;
 
-    public Game(Agent player1, Agent player2, Noise noise, int timePlayer1, int timePlayer2) {
-        this.player1 = player1;
-        this.player2 = player2;
-        this.activeAgent = player1;
-        this.noise = noise;
-        this.gameState = new EightBallState(timePlayer1, timePlayer2);
+    public Game(GameParams gameParams) {
+        this.gameParams = gameParams;
+        this.gameState = new EightBallState(gameParams.timePlayer1(), gameParams.timePlayer2());
+        this.noise = new GaussianNoise(gameParams.noiseMag());
+        this.turnHistory = new ArrayList<>();
+        this.activeAgent = gameParams.player1();
+        this.shotStopwatch = new RealTimeStopwatch();
+        this.gameStopwatch = new RealTimeStopwatch();
     }
 
-    public void play() {
+    public GameSummary play() {
+        gameStopwatch.restart();
         while (!gameState.isTerminal()) {
-            GameState gameStateBeforeShot = getGameStateCopy();
+            TurnType turnType = gameState.getTurnType();
 
-            GameShot gs = switch (gameState.getTurnType().toString()) {
+            GameShot gs = switch (turnType.toString()) {
                 case "TT_BREAK" -> handleBreak();
                 case "TT_NORMAL" -> handleNormal();
                 case "TT_BALL_IN_HAND" -> handleBallInHand();
@@ -39,18 +45,48 @@ public class Game {
             noise.applyNoise(params);
             gs.setParams(params);
 
-            ShotResult sr = gameState.executeShot(gs);
+            TableState tableStateBeforeShot = getGameStateCopy().tableState();
 
-            if (sr == ShotResult.SR_OK_LOST_TURN) {
-                activeAgent = activeAgent == player1 ? player2 : player1;
+            if (gameState.positionRequired()) {
+                tableStateBeforeShot.setBall(Ball.Type.CUE, Ball.State.STATIONARY, gs.getCue_x(), gs.getCue_y());
             }
 
-            turnHistory.add(new Quartet<>(activeAgent.getName(), gameStateBeforeShot.tableState(), gs, sr));
+            ShotResult sr = gameState.executeShot(gs);
+            TableState tableStateAfterShot = getGameStateCopy().tableState();
+
+            turnHistory.add(new Turn(turnType, activeAgent, tableStateBeforeShot, tableStateAfterShot, gs, sr));
+
+            if (sr == ShotResult.SR_OK_LOST_TURN) {
+                activeAgent = activeAgent == gameParams.player1() ? gameParams.player2() : gameParams.player1();
+            }
+
+            if (sr == ShotResult.SR_BAD_PARAMS || sr == ShotResult.SR_SHOT_IMPOSSIBLE) {
+                activeAgent = activeAgent == gameParams.player1() ? gameParams.player2() : gameParams.player1();
+                return new GameSummary(gameParams, WinType.WON_BY_OPPONENT_BAD_PARAMS, activeAgent, turnHistory, gameStopwatch.getElapsed());
+            }
+
+            if (gameState.getTurnType() == TurnType.TT_WIN) {
+                WinType wonBy = getWinType(gs, sr);
+                return new GameSummary(gameParams, wonBy, activeAgent, turnHistory, gameStopwatch.getElapsed());
+            }
+
         }
+
+        return null;
     }
 
-    public ArrayList<Quartet<String, TableState, GameShot, ShotResult>> getTurnHistory() {
-        return turnHistory;
+    private static WinType getWinType(GameShot gs, ShotResult sr) {
+        WinType wonBy;
+        if (gs.getDecision() == Decision.DEC_CONCEDE) {
+            wonBy = WinType.WON_BY_OPPONENT_CONCEDING;
+        } else if (sr == ShotResult.SR_OK) {
+            wonBy = WinType.WON_BY_POCKETING_EIGHTBALL;
+        } else if (sr == ShotResult.SR_OK_LOST_TURN) {
+            wonBy = WinType.WON_BY_OPPONENT_POCKETING_EIGHTBALL;
+        } else {
+            wonBy = WinType.WON_BY_OPPONENT_TIMING_OUT;
+        }
+        return wonBy;
     }
 
     public GameState getGameStateCopy() {
@@ -58,97 +94,109 @@ public class Game {
     }
 
     public GameShot handleBreak() {
-        Pair<ShotParams, Vector> sp = activeAgent.getBreakShot();
+        shotStopwatch.restart();
+        Triplet<ShotParams, Vector, Decision> sp = activeAgent.getBreakShot();
+        double timeSpent = shotStopwatch.getElapsed();
+
+        if (sp.getValue2() == Decision.DEC_CONCEDE) {
+            System.out.println(activeAgent.getName() + ": Conceded (no break)");
+        }
 
         GameShot gs = new GameShot();
         gs.setParams(sp.getValue0());
-        gs.setDecision(Decision.DEC_NO_DECISION);
+        gs.setDecision(sp.getValue2());
         gs.setBall(Ball.Type.UNKNOWN_ID);
         gs.setPocket(Table.Pocket.UNKNOWN_POCKET);
         gs.setCue_x(sp.getValue1().getX());
         gs.setCue_y(sp.getValue1().getY());
-        gs.setTimeSpent(0);
-
-        System.out.println(activeAgent.getName() + ": Break shot");
+        gs.setTimeSpent(timeSpent);
         return gs;
     }
 
     public GameShot handleNormal() {
-        Triplet<ShotParams, Ball.Type, Table.Pocket> sp = activeAgent.getShot(getGameStateCopy());
+        shotStopwatch.restart();
+        Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> sp = activeAgent.getShot(getGameStateCopy());
+        double timeSpent = shotStopwatch.getElapsed();
 
         GameShot gs = new GameShot();
 
-        if (sp == null) {
-            gs.setDecision(Decision.DEC_CONCEDE);
+        if (sp.getValue3() == Decision.DEC_CONCEDE) {
             System.out.println(activeAgent.getName() + ": Conceded (no shots generated)");
-            return gs;
         }
 
         gs.setParams(sp.getValue0());
-        gs.setDecision(Decision.DEC_NO_DECISION);
+        gs.setDecision(sp.getValue3());
         gs.setBall(sp.getValue1());
         gs.setPocket(sp.getValue2());
         gs.setCue_x(0);
         gs.setCue_y(0);
-        gs.setTimeSpent(0);
-
-        System.out.println(activeAgent.getName() + ": Normal shot");
+        gs.setTimeSpent(timeSpent);
         return gs;
     }
 
     public GameShot handleBallInHand() {
-        Vector newCuePos = activeAgent.getBallInHandPlacement(getGameStateCopy());
+        shotStopwatch.restart();
+        Pair<Vector, Decision> response = activeAgent.getBallInHandPlacement(getGameStateCopy());
+        Vector newCuePos = response.getValue0();
 
-        GameState tempGs = getGameStateCopy();
-        tempGs.tableState().setBall(Ball.Type.CUE, Ball.State.STATIONARY, newCuePos.getX(), newCuePos.getY());
+        Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> sp;
 
-        Triplet<ShotParams, Ball.Type, Table.Pocket> sp = activeAgent.getShot(tempGs);
+        if (response.getValue1() == Decision.DEC_CONCEDE) {
+            System.out.println(activeAgent.getName() + ": Conceded (no position generated for ball in hand)");
+            sp = new Quartet<>(new ShotParams(), Ball.Type.UNKNOWN_ID, Table.Pocket.UNKNOWN_POCKET, Decision.DEC_CONCEDE);
+        } else {
+            GameState tempGs = getGameStateCopy();
+            tempGs.tableState().setBall(Ball.Type.CUE, Ball.State.STATIONARY, newCuePos.getX(), newCuePos.getY());
+            sp = activeAgent.getShot(tempGs);
+
+            if (sp.getValue3() == Decision.DEC_CONCEDE) {
+                System.out.println(activeAgent.getName() + ": Conceded (no shots generated for ball in hand)");
+            }
+        }
+        double timeSpent = shotStopwatch.getElapsed();
 
         GameShot gs = new GameShot();
 
-        if (sp == null) {
-            System.out.println(activeAgent.getName() + ": Conceded (no shots generated for ball in hand)");
-            gs.setDecision(Decision.DEC_CONCEDE);
-            return gs;
-        }
-
         gs.setParams(sp.getValue0());
-        gs.setDecision(Decision.DEC_NO_DECISION);
+        gs.setDecision(response.getValue1());
         gs.setBall(sp.getValue1());
         gs.setPocket(sp.getValue2());
         gs.setCue_x(newCuePos.getX());
         gs.setCue_y(newCuePos.getY());
-        gs.setTimeSpent(0);
-
-        System.out.println(activeAgent.getName() + ": Ball in hand");
+        gs.setTimeSpent(timeSpent);
         return gs;
     }
 
     public GameShot handleBehindLine() {
-        Vector newCuePos = activeAgent.getBallBehindLinePlacement(getGameStateCopy());
+        shotStopwatch.restart();
+        Pair<Vector, Decision> response = activeAgent.getBallBehindLinePlacement(getGameStateCopy());
+        Vector newCuePos = response.getValue0();
 
-        GameState tempGs = getGameStateCopy();
-        tempGs.tableState().setBall(Ball.Type.CUE, Ball.State.STATIONARY, newCuePos.getX(), newCuePos.getY());
+        Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> sp;
 
-        Triplet<ShotParams, Ball.Type, Table.Pocket> sp = activeAgent.getShot(tempGs);
+        if (response.getValue1() == Decision.DEC_CONCEDE) {
+            System.out.println(activeAgent.getName() + ": Conceded (no position generated for ball behind line)");
+            sp = new Quartet<>(new ShotParams(), Ball.Type.UNKNOWN_ID, Table.Pocket.UNKNOWN_POCKET, Decision.DEC_CONCEDE);
+        } else {
+            GameState tempGs = getGameStateCopy();
+            tempGs.tableState().setBall(Ball.Type.CUE, Ball.State.STATIONARY, newCuePos.getX(), newCuePos.getY());
+            sp = activeAgent.getShot(tempGs);
+
+            if (sp.getValue3() == Decision.DEC_CONCEDE) {
+                System.out.println(activeAgent.getName() + ": Conceded (no shots generated for ball behind line)");
+            }
+        }
+        double timeSpent = shotStopwatch.getElapsed();
 
         GameShot gs = new GameShot();
 
-        if (sp == null) {
-            System.out.println(activeAgent.getName() + ": Conceded (no shots generated for behind line)");
-            gs.setDecision(Decision.DEC_CONCEDE);
-            return gs;
-        }
-
         gs.setParams(sp.getValue0());
-        gs.setDecision(Decision.DEC_NO_DECISION);
+        gs.setDecision(response.getValue1());
         gs.setBall(sp.getValue1());
         gs.setPocket(sp.getValue2());
         gs.setCue_x(newCuePos.getX());
         gs.setCue_y(newCuePos.getY());
-        gs.setTimeSpent(0);
-
-        System.out.println(activeAgent.getName() + ": Ball behind line");
+        gs.setTimeSpent(timeSpent);
         return gs;
     }
 

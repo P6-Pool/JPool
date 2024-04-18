@@ -65,10 +65,6 @@ public class PathFinder {
         }
 
         double angle = Math.acos(adj / hyp);
-        if (Double.isNaN(angle)) {
-            System.out.println(hyp + "  " + adj);
-            System.out.println(ballToBeShotPos + "  " + ballToBeHitPos);
-        }
         assert !Double.isNaN(angle);
 
         angle *= isLeft ? -1 : 1;

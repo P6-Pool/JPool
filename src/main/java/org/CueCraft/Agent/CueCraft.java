@@ -8,6 +8,7 @@ import org.CueCraft.ShotEvaluator.ShotEvaluator;
 import org.CueCraft.ShotGenerator.ShotStep;
 import org.CueCraft.ShotGenerator.Vector2d;
 import org.javatuples.Pair;
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
 import java.util.Random;
@@ -27,20 +28,20 @@ public class CueCraft implements Agent {
 
     @Override
     public String getName() {
-        return name;
+        return "CueCraft-" + name;
     }
 
     @Override
-    public Pair<ShotParams, Vector> getBreakShot() {
+    public Triplet<ShotParams, Vector, Decision> getBreakShot() {
         ShotParams sp = new ShotParams(2.122, 4.795, 21.027, 300.7421, 4.354);
         Vector vector = new Vector();
         vector.setX(0.756);
         vector.setY(1.808);
-        return new Pair<>(sp, vector);
+        return new Triplet<>(sp, vector, Decision.DEC_NO_DECISION);
     }
 
     @Override
-    public Triplet<ShotParams, Ball.Type, JFastfiz.Table.Pocket> getShot(GameState gameState) {
+    public Quartet<ShotParams, Ball.Type, JFastfiz.Table.Pocket, Decision> getShot(GameState gameState) {
         Table.PlayerPattern pattern = gameState.isOpenTable() ? Table.PlayerPattern.NONE : gameState.playingSolids() ? Table.PlayerPattern.SOLID : Table.PlayerPattern.STRIPED;
 
         ShotEvaluator.ShotDecider shotDecider = (generator, table, playerPattern) -> ShotEvaluator.monteCarloTreeSearch(table, monteCarloDepth, monteCarloSamples, generator, playerPattern);
@@ -48,7 +49,7 @@ public class CueCraft implements Agent {
 
         if (shotDetails == null) {
 //            return getRandomShot();
-            return null;
+            return new Quartet<>(new ShotParams(), Ball.Type.UNKNOWN_ID, JFastfiz.Table.Pocket.UNKNOWN_POCKET, Decision.DEC_CONCEDE);
         }
 
         ShotParams sp = shotDetails.getValue2();
@@ -62,11 +63,11 @@ public class CueCraft implements Agent {
         };
         Ball.Type ball = Ball.Type.swigToEnum(shotDetails.getValue1().getPocketedBallNumber());
 
-        return new Triplet<>(sp, ball, pocket);
+        return new Quartet<>(sp, ball, pocket, Decision.DEC_NO_DECISION);
     }
 
     @Override
-    public Vector getBallInHandPlacement(GameState gameState) {
+    public Pair<Vector, Decision> getBallInHandPlacement(GameState gameState) {
         Random rand = new Random();
 
         double minX = org.CueCraft.Pool.Ball.radius;
@@ -84,13 +85,13 @@ public class CueCraft implements Agent {
                 Vector vec = new Vector();
                 vec.setX(queX);
                 vec.setY(queY);
-                return vec;
+                return new Pair<>(vec, Decision.DEC_NO_DECISION);
             }
         }
     }
 
     @Override
-    public Vector getBallBehindLinePlacement(GameState gameState) {
+    public Pair<Vector, Decision> getBallBehindLinePlacement(GameState gameState) {
         Random rand = new Random();
 
         double minX = org.CueCraft.Pool.Ball.radius;
@@ -108,7 +109,7 @@ public class CueCraft implements Agent {
                 Vector vec = new Vector();
                 vec.setX(queX);
                 vec.setY(queY);
-                return vec;
+                return new Pair<>(vec, Decision.DEC_NO_DECISION);
             }
         }
     }

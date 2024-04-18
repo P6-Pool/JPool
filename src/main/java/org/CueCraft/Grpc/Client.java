@@ -1,5 +1,7 @@
 package org.CueCraft.Grpc;
 
+import CueZone.GameSummary;
+import CueZone.Turn;
 import JFastfiz.GameShot;
 import JFastfiz.ShotParams;
 import JFastfiz.ShotResult;
@@ -47,10 +49,10 @@ public class Client {
         return stub.showShots(req);
     }
 
-    public Empty showGame(ArrayList<Quartet<String, TableState, GameShot, ShotResult>> turnHistory) {
+    public Empty showGame(GameSummary summary) {
         ArrayList<org.CueCraft.protobuf.GameTurn> serTurns = new ArrayList<>();
 
-        for (var turn : turnHistory) {
+        for (var turn : summary.turnHistory()) {
             serTurns.add(serializeGameTurn(turn));
         }
 
@@ -110,12 +112,14 @@ public class Client {
                 .build();
     }
 
-    private org.CueCraft.protobuf.GameTurn serializeGameTurn(Quartet<String, TableState, GameShot, ShotResult> turn) {
+    private org.CueCraft.protobuf.GameTurn serializeGameTurn(Turn turn) {
         return org.CueCraft.protobuf.GameTurn.newBuilder()
-                .setAgentName(turn.getValue0())
-                .setTableState(serializeTable(Table.fromTableState(turn.getValue1())))
-                .setGameShot(serializeGameShot(turn.getValue2()))
-                .setShotResult(turn.getValue3().toString())
+                .setTurnType(turn.turnType().toString())
+                .setAgentName(turn.player().getName())
+                .setTableStateBefore(serializeTable(Table.fromTableState(turn.tableStateBefore())))
+                .setTableStateAfter(serializeTable(Table.fromTableState(turn.tableStateAfter())))
+                .setGameShot(serializeGameShot(turn.gameShot()))
+                .setShotResult(turn.shotResult().toString())
                 .build();
     }
 

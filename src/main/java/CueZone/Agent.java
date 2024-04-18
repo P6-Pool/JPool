@@ -2,17 +2,18 @@ package CueZone;
 
 import JFastfiz.*;
 import org.javatuples.Pair;
+import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
 public interface Agent {
 
-    Pair<ShotParams, Vector> getBreakShot();
+    Triplet<ShotParams, Vector, Decision> getBreakShot();
 
-    Triplet<ShotParams, Ball.Type, Table.Pocket> getShot(GameState gameState);
+    Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> getShot(GameState gameState);
 
-    Vector getBallInHandPlacement(GameState gameState);
+    Pair<Vector, Decision> getBallInHandPlacement(GameState gameState);
 
-    Vector getBallBehindLinePlacement(GameState gameState);
+    Pair<Vector, Decision> getBallBehindLinePlacement(GameState gameState);
 
     String getName();
 
