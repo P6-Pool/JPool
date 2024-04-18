@@ -1,5 +1,6 @@
 package CueZone;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public record ArenaStat(
@@ -14,6 +15,10 @@ public record ArenaStat(
 ) {
     @Override
     public String toString() {
+        String winRatePlayer1 = String.format(Locale.US, "%.2f", (double) numWinsPlayer1 / (double) numGamesPlayed * 100.0);
+        String winRatePlayer2 = String.format(Locale.US, "%.2f", (double) numWinsPlayer2 / (double) numGamesPlayed * 100.0);
+        String avgGameTime = String.format(Locale.US, "%.2f", avgTimePerGame);
+
         StringBuilder sb = new StringBuilder();
 
         // Append params and summaries
@@ -21,9 +26,9 @@ public record ArenaStat(
 
         // Append basic stats
         sb.append("Number of games played: ").append(numGamesPlayed).append("\n");
-        sb.append("Number of wins for Player 1: ").append(numWinsPlayer1).append("\n");
-        sb.append("Number of wins for Player 2: ").append(numWinsPlayer2).append("\n");
-        sb.append("Average time per game: ").append(String.format("%.2f", avgTimePerGame)).append("\n\n");
+        sb.append("Number of wins for Player 1: ").append(numWinsPlayer1).append(" (").append(winRatePlayer1).append("%)\n");
+        sb.append("Number of wins for Player 2: ").append(numWinsPlayer2).append(" (").append(winRatePlayer2).append("%)\n");
+        sb.append("Average time per game: ").append(avgGameTime).append("\n\n");
 
         // Append win type statistics as ASCII bar diagrams
         sb.append("Win types for Player 1:\n");
@@ -54,11 +59,27 @@ public record ArenaStat(
             // Build the bar with padding
             sb.append(winType);
             sb.append(" ".repeat(padding)); // Padding
-            sb.append(": ");
-            sb.append("|".repeat(Math.max(0, count)));
+            sb.append("|");
+            sb.append("▓".repeat(Math.max(0, count)));
             sb.append(" ").append(count).append("\n");
         }
         return sb.toString();
+    }
+
+    public void logToFile(String outDirPath) {
+        FileLogger logger = new FileLogger(outDirPath);
+
+        String pattern = "MM-dd-yyyy-HH-mm-ss";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        String dateStr = simpleDateFormat.format(new Date());
+
+        String fileName = this.params.player1().getName() + "-"
+                + this.params().player2().getName() + "-"
+                + this.numGamesPlayed() + "-"
+                + this.params().noiseMag() + "-"
+                + dateStr;
+
+        logger.log(fileName, this.toString());
     }
 
 }

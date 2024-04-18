@@ -1,5 +1,6 @@
 package org.CueCraft.Pool;
 
+import JFastfiz.Table;
 import org.CueCraft.ShotGenerator.Vector2d;
 
 public class Pocket {
@@ -48,6 +49,17 @@ public class Pocket {
 
         this.leftMost = center.add(leftMostOffset);
         this.rightMost = center.add(rightMostOffset);
+    }
+
+    public static Table.Pocket fromPocketType(PocketType pocket) {
+        return switch (pocket) {
+            case PocketType.NE_Pocket -> JFastfiz.Table.Pocket.NE;
+            case PocketType.E_Pocket -> JFastfiz.Table.Pocket.E;
+            case PocketType.SE_Pocket -> JFastfiz.Table.Pocket.SE;
+            case PocketType.SW_Pocket -> JFastfiz.Table.Pocket.SW;
+            case PocketType.W_Pocket -> JFastfiz.Table.Pocket.W;
+            case PocketType.NW_Pocket -> JFastfiz.Table.Pocket.NW;
+        };
     }
 
 }

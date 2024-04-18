@@ -1,40 +1,34 @@
 package org.CueCraft.ShotEvaluator;
 
 import JFastfiz.*;
+import org.CueCraft.Pool.Pocket;
 import org.CueCraft.Pool.Table;
 import org.CueCraft.ShotGenerator.ShotStep;
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 import java.util.ArrayList;
-import java.util.function.Predicate;
 
 public class ShotEvaluator {
 
     public interface ShotDecider {
-        Triplet<Double, ShotStep, ShotParams> decideShot(ShotParamsGenerator shotParamsGenerator, TableState table, Table.PlayerPattern playerPattern);
-    }
-
-    public interface ShotGenerator {
-        ArrayList<ShotStep> generateShots();
+        Triplet<Double, ShotStep, ShotParams> decideShot(TableState table, Table.PlayerPattern playerPattern);
     }
 
     public interface ShotParamsGenerator {
-        ArrayList<Pair<ShotStep, ShotParams>> generateShotParams();
+        ArrayList<Pair<ShotStep, ShotParams>> generateShotParams(TableState table, Table.PlayerPattern playerPattern);
+    }
+
+    public interface ShotGenerator {
+        ArrayList<ShotStep> generateShots(TableState table, Table.PlayerPattern playerPattern);
     }
 
     public interface ShotRewarder {
-        double rewardShot(Shot shot, Table.PlayerPattern playerPattern, TableState tableStateBefore);
+        double rewardShot(ShotStep shot, Shot shotEvent, Table.PlayerPattern playerPattern, TableState tableStateBefore);
     }
 
-    public static Triplet<Double, ShotStep, ShotParams> getBestShot(TableState tableState, int depth, Table.PlayerPattern playerPattern, ShotDecider shotDecider, ShotRewarder shotRewarder) {
-        ShotGenerator sg = () -> org.CueCraft.ShotGenerator.ShotGenerator.generateShots(tableState, depth, playerPattern);
-        ShotParamsGenerator spg = () -> shotVelocitySampling(tableState, 50, playerPattern, sg, shotRewarder);
-        return shotDecider.decideShot(spg, tableState, playerPattern);
-    }
-
-    public static ArrayList<Pair<ShotStep, ShotParams>> shotVelocitySampling(TableState tableState, int numSamples, Table.PlayerPattern playerPattern, ShotGenerator shotGenerator, ShotRewarder shotRewarder) {
-        ArrayList<ShotStep> shots = shotGenerator.generateShots();
+    public static ArrayList<Pair<ShotStep, ShotParams>> shotVelocitySampling(TableState tableState, Table.PlayerPattern playerPattern, int numSamples, ShotGenerator shotGenerator, ShotRewarder shotRewarder) {
+        ArrayList<ShotStep> shots = shotGenerator.generateShots(tableState, playerPattern);
         ArrayList<Pair<ShotStep, ShotParams>> shotRewards = new ArrayList<>();
         ShotParams params = new ShotParams(0, 0, 20, 0, 0);
 
@@ -45,7 +39,7 @@ public class ShotEvaluator {
             params.setPhi(angle);
 
             for (int i = 0; i < numSamples; i++) {
-                double velocity = (double) i / (double) numSamples * 10.0;
+                double velocity = 0.1 + (double) i / (double) numSamples * 9.4;
                 params.setV(velocity);
 
                 TableState tableStateCopy = new TableState(tableState);
@@ -59,7 +53,7 @@ public class ShotEvaluator {
                 } catch (Exception e) {
                     continue;
                 }
-                double reward = shotRewarder.rewardShot(shotEvent, playerPattern, new TableState(tableState));
+                double reward = shotRewarder.rewardShot(shot, shotEvent, playerPattern, new TableState(tableState));
 
                 if (reward > bestReward) {
                     bestReward = reward;
@@ -77,8 +71,8 @@ public class ShotEvaluator {
         return shotRewards;
     }
 
-    public static Triplet<Double, ShotStep, ShotParams> monteCarloTreeSearch(TableState tableState, int depth, int numSamples, ShotParamsGenerator shotParamsGenerator, Table.PlayerPattern playerPattern) {
-        ArrayList<Pair<ShotStep, ShotParams>> shots = shotParamsGenerator.generateShotParams();
+    public static Triplet<Double, ShotStep, ShotParams> monteCarloTreeSearch(TableState tableState, Table.PlayerPattern playerPattern, int depth, int numSamples, ShotParamsGenerator shotParamsGenerator) {
+        ArrayList<Pair<ShotStep, ShotParams>> shots = shotParamsGenerator.generateShotParams(tableState, playerPattern);
 
         if (shots.isEmpty()) {
             return null;
@@ -94,7 +88,8 @@ public class ShotEvaluator {
             for (int i = 0; i < numSamples; i++) {
                 TableState tableStateCopy = new TableState(tableState);
                 ShotParams noisyParams = new ShotParams(shotParams.getValue1());
-                GaussianNoise noise = new GaussianNoise(0.5);
+                ShotStep shot = shotParams.getValue0();
+                GaussianNoise noise = new GaussianNoise(0.1);
                 noise.applyNoise(noisyParams);
 
                 Shot shotEvent;
@@ -104,11 +99,11 @@ public class ShotEvaluator {
                     continue;
                 }
 
-                if (isSuccessShot(shotEvent, playerPattern, new TableState(tableState))) {
+                if (isSuccessShot(shot, shotEvent, playerPattern, new TableState(tableState))) {
                     if (depth == 1) {
                         rating++;
                     } else {
-                        rating += monteCarloTreeSearch(tableState, depth - 1, numSamples, shotParamsGenerator, playerPattern).getValue0();
+                        rating += monteCarloTreeSearch(tableState, playerPattern, depth - 1, numSamples, shotParamsGenerator).getValue0();
                     }
                 }
             }
@@ -124,58 +119,79 @@ public class ShotEvaluator {
         return new Triplet<>(bestRating, bestShotStep, bestParams);
     }
 
-    public static double rewardShotSimple(Shot shotEvent, Table.PlayerPattern playerPattern, TableState tableStateBefore) {
-        //TODO ensure we pocket the desired ball in the desired hole
-        //TODO ensure that we pocket multiple balls of the same type
+    public static double rewardShotSimple(ShotStep shot, Shot shotEvent, Table.PlayerPattern playerPattern, TableState tableStateBefore) {
         //TODO ensure that after break we aim for the type with fewest balls
 
         Table table = Table.fromTableState(tableStateBefore);
 
+        ArrayList<Pair<Ball, JFastfiz.Table.Pocket>> pocketedBalls = getPocketedBalls(shotEvent);
+        Ball firstBallTouched = getFirstBallTouched(shotEvent);
+
         int numFriendlyPocketed = 0;
-        boolean unfriendlyPocketed = false;
-        boolean illegalShot = false;
-        boolean foundFirstCollision = false;
+        int numOpponentPocketed = 0;
+        boolean illegalBallPocketed = false;
+        boolean firstTouchFriendly = false;
+        boolean pocketedDesiredBallFirstInDesiredHole = false;
 
-        EventVector events = shotEvent.getEventList();
-        for (Event event : events) {
-            Ball b1 = event.getBall1Data();
-            Ball b2 = event.getBall2Data();
+        if (firstBallTouched != null && isFriendlyBall(firstBallTouched, table, playerPattern)) {
+            firstTouchFriendly = true;
+        }
 
-            if (b1.isPocketed()) {
-                if (isFriendlyBall(b1, table, playerPattern)) {
-                    numFriendlyPocketed++;
-                } else {
-                    unfriendlyPocketed = true;
-                    break;
-                }
+        for (int i = 0; i < pocketedBalls.size(); i++) {
+            Ball b = pocketedBalls.get(i).getValue0();
+            JFastfiz.Table.Pocket p = pocketedBalls.get(i).getValue1();
+
+            if (i == 0 && b.getID().swigValue() == shot.getPocketedBallNumber() && p == Pocket.fromPocketType(shot.pocket)) {
+                pocketedDesiredBallFirstInDesiredHole = true;
             }
 
-            if (b2.isPocketed()) {
-                if (isFriendlyBall(b2, table, playerPattern)) {
-                    numFriendlyPocketed++;
-                } else {
-                    unfriendlyPocketed = true;
-                    break;
-                }
-            }
-
-            if (!foundFirstCollision && event.getType() == Event.Type.BALL_COLLISION) {
-                foundFirstCollision = true;
-                illegalShot = !isFriendlyBall(event.getBall2Data(), table, playerPattern);
+            if (isFriendlyBall(b, table, playerPattern)) {
+                numFriendlyPocketed++;
+            } else if (isOpponentBall(b, table, playerPattern)) {
+                numOpponentPocketed++;
+            } else {
+                illegalBallPocketed = true;
             }
         }
 
-        if (unfriendlyPocketed || illegalShot) {
+        if (illegalBallPocketed || !firstTouchFriendly || !pocketedDesiredBallFirstInDesiredHole) {
             return -1;
         }
 
-        return numFriendlyPocketed * 0.1;
+        return numFriendlyPocketed - (numOpponentPocketed * 0.5);
     }
+
+    private static ArrayList<Pair<Ball, JFastfiz.Table.Pocket>> getPocketedBalls(Shot shotEvent) {
+        ArrayList<Pair<Ball, JFastfiz.Table.Pocket>> pocketedBalls = new ArrayList<>();
+
+        EventVector events = shotEvent.getEventList();
+        for (Event event : events) {
+
+            if (event.getType() == Event.Type.POCKETED) {
+                PocketedEvent pe = fastfiz.eventToPocketedEvent(event);
+                pocketedBalls.add(new Pair<>(event.getBall1Data(), pe.getPocket()));
+            }
+
+        }
+
+        return pocketedBalls;
+    }
+
+    private static Ball getFirstBallTouched(Shot shotEvent) {
+        EventVector events = shotEvent.getEventList();
+        for (Event event : events) {
+            if (event.getType() == Event.Type.BALL_COLLISION) {
+                return event.getBall2Data();
+            }
+        }
+        return null;
+    }
+
 
     private static boolean isFriendlyBall(Ball b, Table table, Table.PlayerPattern playerPattern) {
         Ball.Type bType = b.getID();
 
-        if (bType == Ball.Type.CUE){
+        if (bType == Ball.Type.CUE) {
             return false;
         }
 
@@ -194,8 +210,18 @@ public class ShotEvaluator {
         return org.CueCraft.Pool.Ball.fromJBall(b).pattern == playerPattern || playerPattern == Table.PlayerPattern.NONE;
     }
 
-    public static boolean isSuccessShot(Shot shotEvent, Table.PlayerPattern playerPattern, TableState tableStateBefore) {
-        return rewardShotSimple(shotEvent, playerPattern, tableStateBefore) > 0;
+    private static boolean isOpponentBall(Ball b, Table table, Table.PlayerPattern playerPattern) {
+        Ball.Type bType = b.getID();
+
+        if (playerPattern == Table.PlayerPattern.NONE || bType == Ball.Type.CUE || bType == Ball.Type.EIGHT) {
+            return false;
+        }
+
+        return org.CueCraft.Pool.Ball.fromJBall(b).pattern != playerPattern;
+    }
+
+    public static boolean isSuccessShot(ShotStep shot, Shot shotEvent, Table.PlayerPattern playerPattern, TableState tableStateBefore) {
+        return rewardShotSimple(shot, shotEvent, playerPattern, tableStateBefore) > 0;
     }
 
 }

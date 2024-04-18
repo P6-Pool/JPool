@@ -98,15 +98,9 @@ public class Game {
         Triplet<ShotParams, Vector, Decision> sp = activeAgent.getBreakShot();
         double timeSpent = shotStopwatch.getElapsed();
 
-        if (sp.getValue2() == Decision.DEC_CONCEDE) {
-            System.out.println(activeAgent.getName() + ": Conceded (no break)");
-        }
-
         GameShot gs = new GameShot();
         gs.setParams(sp.getValue0());
         gs.setDecision(sp.getValue2());
-        gs.setBall(Ball.Type.UNKNOWN_ID);
-        gs.setPocket(Table.Pocket.UNKNOWN_POCKET);
         gs.setCue_x(sp.getValue1().getX());
         gs.setCue_y(sp.getValue1().getY());
         gs.setTimeSpent(timeSpent);
@@ -119,17 +113,10 @@ public class Game {
         double timeSpent = shotStopwatch.getElapsed();
 
         GameShot gs = new GameShot();
-
-        if (sp.getValue3() == Decision.DEC_CONCEDE) {
-            System.out.println(activeAgent.getName() + ": Conceded (no shots generated)");
-        }
-
         gs.setParams(sp.getValue0());
         gs.setDecision(sp.getValue3());
         gs.setBall(sp.getValue1());
         gs.setPocket(sp.getValue2());
-        gs.setCue_x(0);
-        gs.setCue_y(0);
         gs.setTimeSpent(timeSpent);
         return gs;
     }
@@ -137,54 +124,26 @@ public class Game {
     public GameShot handleBallInHand() {
         shotStopwatch.restart();
         Pair<Vector, Decision> response = activeAgent.getBallInHandPlacement(getGameStateCopy());
-        Vector newCuePos = response.getValue0();
-
-        Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> sp;
-
-        if (response.getValue1() == Decision.DEC_CONCEDE) {
-            System.out.println(activeAgent.getName() + ": Conceded (no position generated for ball in hand)");
-            sp = new Quartet<>(new ShotParams(), Ball.Type.UNKNOWN_ID, Table.Pocket.UNKNOWN_POCKET, Decision.DEC_CONCEDE);
-        } else {
-            GameState tempGs = getGameStateCopy();
-            tempGs.tableState().setBall(Ball.Type.CUE, Ball.State.STATIONARY, newCuePos.getX(), newCuePos.getY());
-            sp = activeAgent.getShot(tempGs);
-
-            if (sp.getValue3() == Decision.DEC_CONCEDE) {
-                System.out.println(activeAgent.getName() + ": Conceded (no shots generated for ball in hand)");
-            }
-        }
-        double timeSpent = shotStopwatch.getElapsed();
-
-        GameShot gs = new GameShot();
-
-        gs.setParams(sp.getValue0());
-        gs.setDecision(response.getValue1());
-        gs.setBall(sp.getValue1());
-        gs.setPocket(sp.getValue2());
-        gs.setCue_x(newCuePos.getX());
-        gs.setCue_y(newCuePos.getY());
-        gs.setTimeSpent(timeSpent);
-        return gs;
+        return getHandShot(response);
     }
 
     public GameShot handleBehindLine() {
         shotStopwatch.restart();
         Pair<Vector, Decision> response = activeAgent.getBallBehindLinePlacement(getGameStateCopy());
+        return getHandShot(response);
+    }
+
+    private GameShot getHandShot(Pair<Vector, Decision> response) {
         Vector newCuePos = response.getValue0();
 
         Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> sp;
 
         if (response.getValue1() == Decision.DEC_CONCEDE) {
-            System.out.println(activeAgent.getName() + ": Conceded (no position generated for ball behind line)");
             sp = new Quartet<>(new ShotParams(), Ball.Type.UNKNOWN_ID, Table.Pocket.UNKNOWN_POCKET, Decision.DEC_CONCEDE);
         } else {
             GameState tempGs = getGameStateCopy();
             tempGs.tableState().setBall(Ball.Type.CUE, Ball.State.STATIONARY, newCuePos.getX(), newCuePos.getY());
             sp = activeAgent.getShot(tempGs);
-
-            if (sp.getValue3() == Decision.DEC_CONCEDE) {
-                System.out.println(activeAgent.getName() + ": Conceded (no shots generated for ball behind line)");
-            }
         }
         double timeSpent = shotStopwatch.getElapsed();
 
@@ -203,16 +162,12 @@ public class Game {
     public GameShot handleFoulOnBreak() {
         GameShot gs = new GameShot();
         gs.setDecision(Decision.DEC_RERACK);
-
-        System.out.println(activeAgent.getName() + ": Foul on break");
         return gs;
     }
 
     public GameShot handleEightBallPocketedOnBreak() {
         GameShot gs = new GameShot();
         gs.setDecision(Decision.DEC_RERACK);
-
-        System.out.println(activeAgent.getName() + ": Eightball pocketed on break");
         return gs;
     }
 

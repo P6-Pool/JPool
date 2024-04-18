@@ -2,11 +2,10 @@ package org.CueCraft.Agent;
 
 import CueZone.Agent;
 import JFastfiz.*;
-import org.CueCraft.Pool.Pocket;
 import org.CueCraft.Pool.Table;
 import org.CueCraft.ShotEvaluator.ShotEvaluator;
+import org.CueCraft.ShotGenerator.ShotGenerator;
 import org.CueCraft.ShotGenerator.ShotStep;
-import org.CueCraft.ShotGenerator.Vector2d;
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
@@ -15,15 +14,14 @@ import java.util.Random;
 
 public class CueCraft implements Agent {
     String name;
-    int shotDepth;
-    int monteCarloDepth;
-    int monteCarloSamples;
+    ShotEvaluator.ShotDecider shotDecider;
 
-    public CueCraft(String name, int shotDepth, int monteCarloDepth, int monteCarloSamples) {
+    public CueCraft(String name, int shotDepth, int numVelocitySamples, int monteCarloDepth, int numMonteCarloSamples) {
         this.name = name;
-        this.shotDepth = shotDepth;
-        this.monteCarloDepth = monteCarloDepth;
-        this.monteCarloSamples = monteCarloSamples;
+
+        ShotEvaluator.ShotGenerator shotGenerator = (tableState, pattern) -> ShotGenerator.generateShots(tableState, pattern, shotDepth);
+        ShotEvaluator.ShotParamsGenerator shotParamsGenerator = (tableState, pattern) -> ShotEvaluator.shotVelocitySampling(tableState, pattern, numVelocitySamples, shotGenerator, ShotEvaluator::rewardShotSimple);
+        this.shotDecider = (tableState, pattern) -> ShotEvaluator.monteCarloTreeSearch(tableState, pattern, monteCarloDepth, numMonteCarloSamples, shotParamsGenerator);
     }
 
     @Override
@@ -43,9 +41,9 @@ public class CueCraft implements Agent {
     @Override
     public Quartet<ShotParams, Ball.Type, JFastfiz.Table.Pocket, Decision> getShot(GameState gameState) {
         Table.PlayerPattern pattern = gameState.isOpenTable() ? Table.PlayerPattern.NONE : gameState.playingSolids() ? Table.PlayerPattern.SOLID : Table.PlayerPattern.STRIPED;
+        TableState tableState = gameState.tableState();
 
-        ShotEvaluator.ShotDecider shotDecider = (generator, table, playerPattern) -> ShotEvaluator.monteCarloTreeSearch(table, monteCarloDepth, monteCarloSamples, generator, playerPattern);
-        Triplet<Double, ShotStep, ShotParams> shotDetails = ShotEvaluator.getBestShot(gameState.tableState(), shotDepth, pattern, shotDecider, ShotEvaluator::rewardShotSimple);
+        Triplet<Double, ShotStep, ShotParams> shotDetails = shotDecider.decideShot(tableState, pattern);
 
         if (shotDetails == null) {
 //            return getRandomShot();

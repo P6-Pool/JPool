@@ -10,7 +10,7 @@ import java.util.List;
 
 public class ShotGenerator {
 
-    static public ArrayList<ShotStep> generateShots(TableState tableState, int depth, Table.PlayerPattern playerPattern) {
+    static public ArrayList<ShotStep> generateShots(TableState tableState, Table.PlayerPattern playerPattern, int depth) {
         Table table = Table.fromTableState(tableState);
 
         if (depth < 2) {

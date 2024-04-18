@@ -88,20 +88,4 @@ public class Arena {
 
         return new ArenaStat(gameParams, summaries, numGamesPlayed, numWinsPlayer1, numWinsPlayer2, winTypesPlayer1, winTypesPlayer2, avgTimePerGame);
     }
-
-    public static void LogToFile(ArenaStat stats, String outDirPath) {
-        FileLogger logger = new FileLogger(outDirPath);
-
-        String pattern = "MM-dd-yyyy-HH-mm-ss";
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-        String dateStr = simpleDateFormat.format(new Date());
-
-        String fileName = stats.params().player1().getName() + "-"
-                + stats.params().player2().getName() + "-"
-                + stats.numGamesPlayed() + "-"
-                + stats.params().noiseMag() + "-"
-                + dateStr;
-
-        logger.log(fileName, stats.toString());
-    }
 }
