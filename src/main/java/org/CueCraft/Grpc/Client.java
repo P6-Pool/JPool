@@ -1,5 +1,7 @@
 package org.CueCraft.Grpc;
 
+import CueZone.ArenaStat;
+import CueZone.Game;
 import CueZone.GameSummary;
 import CueZone.Turn;
 import JFastfiz.GameShot;
@@ -49,18 +51,18 @@ public class Client {
         return stub.showShots(req);
     }
 
-    public Empty showGame(GameSummary summary) {
-        ArrayList<org.CueCraft.protobuf.GameTurn> serTurns = new ArrayList<>();
+    public Empty showGames(ArrayList<GameSummary> summaries) {
+        ArrayList<org.CueCraft.protobuf.Game> serGames = new ArrayList<>();
 
-        for (var turn : summary.turnHistory()) {
-            serTurns.add(serializeGameTurn(turn));
+        for (var summary : summaries) {
+            serGames.add(serializeGame(summary));
         }
 
-        org.CueCraft.protobuf.ShowGameRequest req = org.CueCraft.protobuf.ShowGameRequest.newBuilder()
-                .addAllTurnHistory(serTurns)
+        org.CueCraft.protobuf.ShowGamesRequest req = org.CueCraft.protobuf.ShowGamesRequest.newBuilder()
+                .addAllGames(serGames)
                 .build();
 
-        return stub.showGame(req);
+        return stub.showGames(req);
     }
 
     public void shutdown() {
@@ -84,15 +86,15 @@ public class Client {
         return builder.build();
     }
 
-    private ShotType serializeShotType(ShotStep.ShotStepType type) {
+    private static ShotType serializeShotType(ShotStep.ShotStepType type) {
         return ShotType.forNumber(type.ordinal());
     }
 
-    private Point serializeVector2d(Vector2d vec) {
+    private static Point serializeVector2d(Vector2d vec) {
         return Point.newBuilder().setX(vec.x).setY(vec.y).build();
     }
 
-    private org.CueCraft.protobuf.TableState serializeTable(Table table) {
+    private static org.CueCraft.protobuf.TableState serializeTable(Table table) {
         ArrayList<org.CueCraft.protobuf.Ball> serBalls = new ArrayList<>();
 
         for (Ball ball : table.balls) {
@@ -104,7 +106,7 @@ public class Client {
                 .build();
     }
 
-    private org.CueCraft.protobuf.Ball serializeBall(Ball ball) {
+    private static org.CueCraft.protobuf.Ball serializeBall(Ball ball) {
         return org.CueCraft.protobuf.Ball.newBuilder()
                 .setPos(serializeVector2d(ball.pos))
                 .setNumber(ball.number)
@@ -112,7 +114,19 @@ public class Client {
                 .build();
     }
 
-    private org.CueCraft.protobuf.GameTurn serializeGameTurn(Turn turn) {
+    public static org.CueCraft.protobuf.Game serializeGame(GameSummary summary) {
+        ArrayList<org.CueCraft.protobuf.GameTurn> serTurns = new ArrayList<>();
+
+        for (var turn : summary.turnHistory()) {
+            serTurns.add(serializeGameTurn(turn));
+        }
+
+        return org.CueCraft.protobuf.Game.newBuilder()
+                .addAllTurnHistory(serTurns)
+                .build();
+    }
+
+    private static org.CueCraft.protobuf.GameTurn serializeGameTurn(Turn turn) {
         return org.CueCraft.protobuf.GameTurn.newBuilder()
                 .setTurnType(turn.turnType().toString())
                 .setAgentName(turn.player().getName())
@@ -123,7 +137,7 @@ public class Client {
                 .build();
     }
 
-    private org.CueCraft.protobuf.GameShot serializeGameShot(GameShot gameShot) {
+    private static org.CueCraft.protobuf.GameShot serializeGameShot(GameShot gameShot) {
         return org.CueCraft.protobuf.GameShot.newBuilder()
                 .setBallTarget(gameShot.getBall().toString())
                 .setPocketTarget(gameShot.getPocket().toString())
@@ -133,7 +147,7 @@ public class Client {
                 .build();
     }
 
-    private org.CueCraft.protobuf.ShotParams serializeShotParams(ShotParams gameShot) {
+    private static org.CueCraft.protobuf.ShotParams serializeShotParams(ShotParams gameShot) {
         return org.CueCraft.protobuf.ShotParams.newBuilder()
                 .setA(gameShot.getA())
                 .setB(gameShot.getB())

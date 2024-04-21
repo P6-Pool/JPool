@@ -1,5 +1,9 @@
 package CueZone;
 
+import org.CueCraft.Grpc.Client;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -84,6 +88,58 @@ public record ArenaStat(
                 + this.params().noiseMag();
 
         logger.log(fileName, this.toString());
+    }
+
+    public void saveSerializedSummariesToFile(ArrayList<GameSummary> summaries, String outDirPath) {
+        ArrayList<org.CueCraft.protobuf.Game> serGames = new ArrayList<>();
+
+        for (var summary : summaries) {
+            serGames.add(Client.serializeGame(summary));
+        }
+
+        org.CueCraft.protobuf.ShowGamesRequest req = org.CueCraft.protobuf.ShowGamesRequest.newBuilder()
+                .addAllGames(serGames)
+                .build();
+
+        // Serialize the protobuf object to bytes
+        byte[] bytes = req.toByteArray();
+
+        // Generate file name
+        String pattern = "MM-dd-yyyy-HH-mm-ss";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        String dateStr = simpleDateFormat.format(new Date());
+
+        String fileName = dateStr + "-"
+                + "playlist(" + summaries.size() + ") - "
+                + this.params().player1().getName() + "-"
+                + this.params().player2().getName() + "-"
+                + this.numGamesPlayed() + "-"
+                + this.params().noiseMag();
+
+        // Write the bytes to a file
+        try (FileOutputStream outputStream = new FileOutputStream(outDirPath + "/" + fileName + ".proto")) {
+            outputStream.write(bytes);
+            System.out.println("Protobuf object saved to file successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public ArrayList<GameSummary> getTopGames(int maxNumGames) {
+        ArrayList<GameSummary> topGames = new ArrayList<>();
+
+        summaries.sort(Comparator.comparingInt(a -> a.turnHistory().size()));
+
+        for (GameSummary summary : summaries) {
+            if (summary.winner() == summary.gameParams().player1() && summary.wonBy() == Game.WinType.WON_BY_POCKETING_EIGHTBALL) {
+                topGames.add(summary);
+            }
+            if (topGames.size() == maxNumGames) {
+                break;
+            }
+        }
+
+        return  topGames;
     }
 
 }

@@ -42,5 +42,6 @@ settings.xml
 .idea
 
 logs
+highlights
 
 src/main/resources/lib/libfastfiz.so

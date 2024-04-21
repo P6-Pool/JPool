@@ -2,6 +2,9 @@ package org.CueCraft;
 
 import CueZone.*;
 import org.CueCraft.Agent.CueCraft;
+import org.CueCraft.Grpc.Client;
+
+import java.util.ArrayList;
 
 
 public class Main {
@@ -16,19 +19,19 @@ public class Main {
         String logDir = workingDir + "/logs";
         String highlightsDir = workingDir + "/highlights";
 
-        Agent player1 = new CueCraft("William", 2, 50, 1, 50);
+        Agent player1 = new CueCraft("William", 3, 50, 1, 100);
         Agent player2 = new CueConcede();
 
-        GameParams params = new GameParams(player1, player2, 0, 0, 0);
+        GameParams params = new GameParams(player1, player2, 0.5, 0, 0);
 
-        ArenaStat stats = Arena.pvpAsync(params, 50, 10);
-
+        ArenaStat stats = Arena.pvpAsync(params, 10, 10);
         stats.logToFile(logDir);
-//        stats.saveTopTen(highlightsDir)
-
         System.out.println(stats);
 
-//        Client client = new Client("localhost", 50051);
-//        client.showGame(summary);
+        ArrayList<GameSummary> topGames = stats.getTopGames(10);
+        stats.saveSerializedSummariesToFile(topGames, highlightsDir);
+
+        Client client = new Client("localhost", 50051);
+        client.showGames(topGames);
     }
 }
