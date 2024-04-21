@@ -11,13 +11,16 @@ public record ArenaStat(
         int numWinsPlayer2,
         Map<Game.WinType, Integer> winTypesPlayer1,
         Map<Game.WinType, Integer> winTypesPlayer2,
-        double avgTimePerGame
+        double avgTimePerGame,
+        double arenaTotalTime
 ) {
     @Override
     public String toString() {
         String winRatePlayer1 = String.format(Locale.US, "%.2f", (double) numWinsPlayer1 / (double) numGamesPlayed * 100.0);
         String winRatePlayer2 = String.format(Locale.US, "%.2f", (double) numWinsPlayer2 / (double) numGamesPlayed * 100.0);
         String avgGameTime = String.format(Locale.US, "%.2f", avgTimePerGame);
+        String arenaTime = String.format(Locale.US, "%.2f", arenaTotalTime);
+
 
         StringBuilder sb = new StringBuilder();
 
@@ -28,7 +31,8 @@ public record ArenaStat(
         sb.append("Number of games played: ").append(numGamesPlayed).append("\n");
         sb.append("Number of wins for Player 1: ").append(numWinsPlayer1).append(" (").append(winRatePlayer1).append("%)\n");
         sb.append("Number of wins for Player 2: ").append(numWinsPlayer2).append(" (").append(winRatePlayer2).append("%)\n");
-        sb.append("Average time per game: ").append(avgGameTime).append("\n\n");
+        sb.append("Average time per game: ").append(avgGameTime).append("s\n");
+        sb.append("Arena time: ").append(arenaTime).append("s\n\n");
 
         // Append win type statistics as ASCII bar diagrams
         sb.append("Win types for Player 1:\n");
@@ -73,11 +77,11 @@ public record ArenaStat(
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
         String dateStr = simpleDateFormat.format(new Date());
 
-        String fileName = this.params.player1().getName() + "-"
+        String fileName = dateStr + "-"
+                + this.params.player1().getName() + "-"
                 + this.params().player2().getName() + "-"
                 + this.numGamesPlayed() + "-"
-                + this.params().noiseMag() + "-"
-                + dateStr;
+                + this.params().noiseMag();
 
         logger.log(fileName, this.toString());
     }

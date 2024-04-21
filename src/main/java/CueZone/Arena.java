@@ -1,5 +1,8 @@
 package CueZone;
 
+import JFastfiz.RealTimeStopwatch;
+import JFastfiz.Stopwatch;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,6 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Arena {
     public static ArenaStat pvpAsync(GameParams gameParams, int numGames, int maxConcurrently) {
+        Stopwatch stopwatch = new RealTimeStopwatch();
+        stopwatch.restart();
+
         ArrayList<GameSummary> gameSummaries = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(numGames, maxConcurrently)); // Create a thread pool with a maximum of 10 threads
 
@@ -48,10 +54,13 @@ public class Arena {
         // Shutdown the executor
         executor.shutdown();
 
-        return arenaStatFromSummaries(gameParams, gameSummaries);
+        return arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed());
     }
 
     public static ArenaStat pvpSync(GameParams gameParams, int numGames) {
+        Stopwatch stopwatch = new RealTimeStopwatch();
+        stopwatch.restart();
+
         ArrayList<GameSummary> gameSummaries = new ArrayList<>();
 
         for (int i = 0; i < numGames; i++) {
@@ -60,10 +69,10 @@ public class Arena {
             gameSummaries.add(game.play());
         }
 
-        return arenaStatFromSummaries(gameParams, gameSummaries);
+        return arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed());
     }
 
-    private static ArenaStat arenaStatFromSummaries(GameParams gameParams, ArrayList<GameSummary> summaries) {
+    private static ArenaStat arenaStatFromSummaries(GameParams gameParams, ArrayList<GameSummary> summaries, double arenaTime) {
         int numGamesPlayed = summaries.size();
         int numWinsPlayer1 = (int) summaries.stream().filter((sum) -> sum.winner() == gameParams.player1()).count();
         int numWinsPlayer2 = numGamesPlayed - numWinsPlayer1;
@@ -86,6 +95,6 @@ public class Arena {
 
         double avgTimePerGame = summaries.stream().mapToDouble(GameSummary::gameLength).sum() / numGamesPlayed;
 
-        return new ArenaStat(gameParams, summaries, numGamesPlayed, numWinsPlayer1, numWinsPlayer2, winTypesPlayer1, winTypesPlayer2, avgTimePerGame);
+        return new ArenaStat(gameParams, summaries, numGamesPlayed, numWinsPlayer1, numWinsPlayer2, winTypesPlayer1, winTypesPlayer2, avgTimePerGame, arenaTime);
     }
 }

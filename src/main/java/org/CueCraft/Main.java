@@ -16,12 +16,12 @@ public class Main {
         String logDir = workingDir + "/logs";
         String highlightsDir = workingDir + "/highlights";
 
-        Agent player1 = new CueCraft("William", 3, 50, 1, 50);
+        Agent player1 = new CueCraft("William", 2, 50, 1, 50);
         Agent player2 = new CueConcede();
 
         GameParams params = new GameParams(player1, player2, 0, 0, 0);
 
-        ArenaStat stats = Arena.pvpAsync(params, 100, 10);
+        ArenaStat stats = Arena.pvpAsync(params, 50, 10);
 
         stats.logToFile(logDir);
 //        stats.saveTopTen(highlightsDir)
