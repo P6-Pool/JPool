@@ -1,5 +1,7 @@
 package org.CueCraft.Pool;
 
+import JFastfiz.EightBallState;
+import JFastfiz.GameType;
 import JFastfiz.TableState;
 import org.CueCraft.ShotGenerator.Vector2d;
 
@@ -63,6 +65,16 @@ public class Table {
         ArrayList<Ball> balls = new ArrayList<>();
         for (int i = 0; i < numBalls + 1; i++) {
             balls.add(new Ball(i, 1, new Vector2d(Ball.radius + rand.nextDouble() * (Table.width - Ball.radius * 2), Table.length / 18 * (i + 1))));
+        }
+        return new Table(balls);
+    }
+
+    public static Table eightBallTableState() {
+        ArrayList<Ball> balls = new ArrayList<>();
+        TableState ts = EightBallState.RackedState(GameType.GT_EIGHTBALL).tableState();
+        for (int i = 0; i < 16 + 1; i++) {
+            JFastfiz.Ball b = ts.getBall(JFastfiz.Ball.Type.swigToEnum(i));
+            balls.add(new Ball(i, 1, new Vector2d(b.getPos().getX(), b.getPos().getY())));
         }
         return new Table(balls);
     }

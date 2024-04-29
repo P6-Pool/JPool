@@ -30,7 +30,7 @@ public class ShotEvaluator {
     public static ArrayList<Pair<ShotStep, ShotParams>> shotVelocitySampling(TableState tableState, Table.PlayerPattern playerPattern, int numSamples, ShotGenerator shotGenerator, ShotRewarder shotRewarder) {
         ArrayList<ShotStep> shots = shotGenerator.generateShots(tableState, playerPattern);
         ArrayList<Pair<ShotStep, ShotParams>> shotRewards = new ArrayList<>();
-        ShotParams params = new ShotParams(0, 0, 20, 0, 0);
+        ShotParams params = new ShotParams(0, 0, 10, 0, 0);
 
         for (ShotStep shot : shots) {
             double bestVelocity = 1;

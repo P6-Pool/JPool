@@ -189,6 +189,7 @@ public class ShotGenerator {
                     next = prev;
                 }
 
+                prev.ghostBallPos = getGhostBall(ShotStep.ShotStepType.BALL_BOTH, prev.leftMost, prev.rightMost, ball.pos);
                 newStepTrees.add(prev);
             }
         }
