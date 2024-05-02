@@ -1,3 +1,6 @@
 [submodule "fastfiz-renderer-protobuffers"]
 	path = fastfiz-renderer-protobuffers
 	url = https://github.com/P6-Pool/fastfiz-renderer-protobuffers.git
+[submodule "fastfiz"]
+	path = fastfiz
+	url = https://github.com/P6-Pool/fastfiz
