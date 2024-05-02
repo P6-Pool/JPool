@@ -36,10 +36,10 @@ public class Table {
         NW_Pocket = new Pocket(new Vector2d(diagonalOffset, length - diagonalOffset), Pocket.PocketType.NW_Pocket, cornerPocketWidth);
     }
 
-    public static Table randomTableState(int numBalls) {
+    public static Table randomTableState(int numBalls, int seed) {
         ArrayList<Ball> balls = new ArrayList<>();
         ArrayList<Integer> ballNums = new ArrayList<>(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
-        Random rand = new Random(numBalls);
+        Random rand = new Random(seed);
 
         for (int i = 0; i < numBalls; i++) {
             int randIdx = rand.nextInt(ballNums.size());

@@ -3,9 +3,7 @@ package CueZone;
 import JFastfiz.RealTimeStopwatch;
 import JFastfiz.Stopwatch;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -17,7 +15,7 @@ public class Arena {
         stopwatch.restart();
 
         ArrayList<GameSummary> gameSummaries = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(Math.min(numGames, maxConcurrently)); // Create a thread pool with a maximum of 10 threads
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(numGames, maxConcurrently));
 
         Semaphore concurrencyCap = new Semaphore(maxConcurrently);
 
@@ -25,6 +23,11 @@ public class Arena {
 
         // Create a list to hold the Future objects for each game
         ArrayList<Future<GameSummary>> futures = new ArrayList<>();
+
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        System.out.println(arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed(), numGames));
+        System.out.flush();
 
         // Submit tasks to the thread pool
         for (int i = 0; i < numGames; i++) {
@@ -36,7 +39,6 @@ public class Arena {
                 } finally {
                     finished.getAndIncrement();
                     concurrencyCap.release(); // Release permit after executing the task
-                    System.out.println("Played: " + finished + " of " + numGames + " games");
                 }
             };
             futures.add(executor.submit(task));
@@ -46,6 +48,10 @@ public class Arena {
         for (Future<GameSummary> future : futures) {
             try {
                 gameSummaries.add(future.get());
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+                System.out.println(arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed(), numGames));
+                System.out.flush();
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
@@ -54,7 +60,7 @@ public class Arena {
         // Shutdown the executor
         executor.shutdown();
 
-        return arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed());
+        return arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed(), numGames);
     }
 
     public static ArenaStat pvpSync(GameParams gameParams, int numGames) {
@@ -63,16 +69,25 @@ public class Arena {
 
         ArrayList<GameSummary> gameSummaries = new ArrayList<>();
 
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+        System.out.println(arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed(), numGames));
+        System.out.flush();
+
         for (int i = 0; i < numGames; i++) {
             System.out.println("Playing game " + (i + 1) + " of " + numGames);
             Game game = new Game(gameParams);
             gameSummaries.add(game.play());
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
+            System.out.println(arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed(), numGames));
+            System.out.flush();
         }
 
-        return arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed());
+        return arenaStatFromSummaries(gameParams, gameSummaries, stopwatch.getElapsed(), numGames);
     }
 
-    private static ArenaStat arenaStatFromSummaries(GameParams gameParams, ArrayList<GameSummary> summaries, double arenaTime) {
+    private static ArenaStat arenaStatFromSummaries(GameParams gameParams, ArrayList<GameSummary> summaries, double arenaTime, int numTotalGames) {
         int numGamesPlayed = summaries.size();
         int numWinsPlayer1 = (int) summaries.stream().filter((sum) -> sum.winner() == gameParams.player1()).count();
         int numWinsPlayer2 = numGamesPlayed - numWinsPlayer1;
@@ -95,6 +110,6 @@ public class Arena {
 
         double avgTimePerGame = summaries.stream().mapToDouble(GameSummary::gameLength).sum() / numGamesPlayed;
 
-        return new ArenaStat(gameParams, summaries, numGamesPlayed, numWinsPlayer1, numWinsPlayer2, winTypesPlayer1, winTypesPlayer2, avgTimePerGame, arenaTime);
+        return new ArenaStat(gameParams, summaries, numTotalGames ,numGamesPlayed, numWinsPlayer1, numWinsPlayer2, winTypesPlayer1, winTypesPlayer2, avgTimePerGame, arenaTime);
     }
 }

@@ -1,15 +1,17 @@
 package CueZone;
 
 import org.CueCraft.Grpc.Client;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public record ArenaStat(
         GameParams params,
         ArrayList<GameSummary> summaries,
+        int numTotalGames,
         int numGamesPlayed,
         int numWinsPlayer1,
         int numWinsPlayer2,
@@ -20,6 +22,7 @@ public record ArenaStat(
 ) {
     @Override
     public String toString() {
+        String completion = String.format(Locale.US, "%.2f", (double) numGamesPlayed / (double) numTotalGames * 100.0);
         String winRatePlayer1 = String.format(Locale.US, "%.2f", (double) numWinsPlayer1 / (double) numGamesPlayed * 100.0);
         String winRatePlayer2 = String.format(Locale.US, "%.2f", (double) numWinsPlayer2 / (double) numGamesPlayed * 100.0);
         String avgGameTime = String.format(Locale.US, "%.2f", avgTimePerGame);
@@ -29,10 +32,10 @@ public record ArenaStat(
         StringBuilder sb = new StringBuilder();
 
         // Append params and summaries
-        sb.append("Params: ").append(params).append("\n");
+        sb.append("Params: ").append("\n").append(params).append("\n");
 
         // Append basic stats
-        sb.append("Number of games played: ").append(numGamesPlayed).append("\n");
+        sb.append("Number of games played: ").append(numGamesPlayed).append(" of ").append(numTotalGames).append(" (").append(completion).append("%)\n");
         sb.append("Number of wins for Player 1: ").append(numWinsPlayer1).append(" (").append(winRatePlayer1).append("%)\n");
         sb.append("Number of wins for Player 2: ").append(numWinsPlayer2).append(" (").append(winRatePlayer2).append("%)\n");
         sb.append("Average time per game: ").append(avgGameTime).append("s\n");
@@ -40,21 +43,23 @@ public record ArenaStat(
 
         // Append win type statistics as ASCII bar diagrams
         sb.append("Win types for Player 1:\n");
-        sb.append(formatWinTypeBarDiagram(winTypesPlayer1)).append("\n");
+        sb.append(formatWinTypeBarDiagram(winTypesPlayer1, numGamesPlayed)).append("\n");
         sb.append("Win types for Player 2:\n");
-        sb.append(formatWinTypeBarDiagram(winTypesPlayer2)).append("\n");
+        sb.append(formatWinTypeBarDiagram(winTypesPlayer2, numGamesPlayed)).append("\n");
 
         return sb.toString();
     }
 
-    private String formatWinTypeBarDiagram(Map<Game.WinType, Integer> winTypes) {
+    private String formatWinTypeBarDiagram(Map<Game.WinType, Integer> winTypes, int numGamesPlayed) {
         StringBuilder sb = new StringBuilder();
 
         // Find the maximum count to determine the length of the longest bar
-        Game.WinType longestWintype = Arrays.stream(Game.WinType.values()).max(Comparator.comparingInt(val -> val.toString().length())).orElse(Game.WinType.WON_BY_OPPONENT_CONCEDING);
+        Game.WinType longestWinTypeStr = Arrays.stream(Game.WinType.values())
+                .max(Comparator.comparingInt(val -> val.toString().length()))
+                .orElse(Game.WinType.WON_BY_OPPONENT_CONCEDING);
 
-        // Calculate the length of the longest bar (including the label and count)
-        int maxBarLength = longestWintype.toString().length() + 3; // 3 for the label, colon, and space
+        int totalCount = winTypes.values().stream().mapToInt(Integer::intValue).sum();
+        int maxBarLength = 50;
 
         // Format each win type
         for (Map.Entry<Game.WinType, Integer> entry : winTypes.entrySet()) {
@@ -62,17 +67,30 @@ public record ArenaStat(
             int count = entry.getValue();
 
             // Calculate the number of spaces needed to pad the bar
-            int padding = maxBarLength - (winType.toString().length() + 2); // 2 for the colon and space
+            int padding = longestWinTypeStr.toString().length() + 3 - (winType.toString().length() + 2);
 
             // Build the bar with padding
             sb.append(winType);
             sb.append(" ".repeat(padding)); // Padding
             sb.append("|");
-            sb.append("▓".repeat(Math.max(0, count)));
+            sb.append(generateBar(count, numGamesPlayed, maxBarLength));
             sb.append(" ").append(count).append("\n");
         }
         return sb.toString();
     }
+
+    private String generateBar(int count, int totalCount, int maxBarLength) {
+        char[] unicodeChars = {'▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'};
+
+        double numChars = (double) count / (double) totalCount * (double) maxBarLength;
+        double remainder = numChars - Math.floor(numChars);
+
+        int numFullChars = (int) Math.floor(numChars);
+        char remainderChar = unicodeChars[(int) Math.round(remainder * (double) (unicodeChars.length - 1))];
+
+        return "█".repeat(numFullChars) + remainderChar;
+    }
+
 
     public void logToFile(String outDirPath) {
         FileLogger logger = new FileLogger(outDirPath);
@@ -117,9 +135,12 @@ public record ArenaStat(
                 + this.params().noiseMag();
 
         // Write the bytes to a file
-        try (FileOutputStream outputStream = new FileOutputStream(outDirPath + "/" + fileName + ".proto")) {
+        try {
+            Files.createDirectories(Paths.get(outDirPath));
+            String path = outDirPath + "/" + fileName;
+            FileOutputStream outputStream = new FileOutputStream(path);
             outputStream.write(bytes);
-            System.out.println("Protobuf object saved to file successfully.");
+            System.out.println("Highlights outputted to: " + path);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -139,7 +160,7 @@ public record ArenaStat(
             }
         }
 
-        return  topGames;
+        return topGames;
     }
 
 }
