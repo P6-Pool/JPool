@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.CueCraft</groupId>
@@ -156,6 +156,19 @@
               </sources>
             </configuration>
           </execution>
+
+<!--          <execution>-->
+<!--            <id>add-fastfiz-source</id>-->
+<!--            <phase>generate-sources</phase>-->
+<!--            <goals>-->
+<!--              <goal>add-source</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <sources>-->
+<!--                <source>${project.basedir}/fastfiz/JFastfiz</source>-->
+<!--              </sources>-->
+<!--            </configuration>-->
+<!--          </execution>-->
         </executions>
       </plugin>
 
@@ -167,59 +180,81 @@
           <target>21</target>
         </configuration>
       </plugin>
+
       <plugin>
-      <!-- Build an executable JAR -->
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-jar-plugin</artifactId>
-      <version>3.1.0</version>
-      <configuration>
-        <archive>
-          <manifest>
-            <addClasspath>true</addClasspath>
-            <classpathPrefix>lib/</classpathPrefix>
-            <mainClass>org.CueCraft.Main</mainClass>
-          </manifest>
-        </archive>
-      </configuration>
-    </plugin>
-            <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>3.0.0</version>
-            <executions>
-                <execution>
-                    <id>run-makefile</id>
-                    <phase>generate-sources</phase> <!-- Adjust the phase as needed -->
-                    <goals>
-                        <goal>exec</goal>
-                    </goals>
-                    <configuration>
-                        <executable>make</executable>
-                        <arguments>
-                            <argument>-C</argument>
-                            <argument>fastfiz/fastfiz</argument>
-                        </arguments>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-        <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.8</version>
-            <executions>
-                <execution>
-                    <phase>package</phase> <!-- Adjust phase according to your needs -->
-                    <goals>
-                        <goal>run</goal>
-                    </goals>
-                    <configuration>
-                        <target>
-                            <move file="fastfiz/fastfiz/libfastfiz.so" tofile="src/main/resources/lib/libfastfiz.so"/>
-                        </target>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>run-makefile-make</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>make</executable>
+              <arguments>
+                <argument>-C</argument>
+                <argument>fastfiz/fastfiz</argument>
+              </arguments>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>run-makefile-clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>make</executable>
+              <arguments>
+                <argument>clean</argument>
+                <argument>-C</argument>
+                <argument>fastfiz/fastfiz</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <id>move-libfastfiz</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <move file="fastfiz/fastfiz/libfastfiz.so"
+                      tofile="src/main/resources/lib/libfastfiz.so"/>
+              </target>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>move-JFastfiz</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <move todir="src/main/java/JFastfiz">
+                  <fileset dir="fastfiz/JFastfiz/"/>
+                </move >
+              </target>
+            </configuration>
+          </execution>
+
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

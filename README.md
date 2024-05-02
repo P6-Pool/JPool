@@ -1,9 +1,7 @@
 - Fetch submodule
   - `git submodule update --init`
-- Compile protobuffers
+- Generate and install dependencies
   - `mvn clean install --settings ./settings.xml`
-- Download fastfiz and make a java bundle named `libfastfiz.so`
-  - Put this lib in `src/main/resources/lib`
 - Build jar
   - `mvn package --settings ./settings.xml`
 - Run jar
