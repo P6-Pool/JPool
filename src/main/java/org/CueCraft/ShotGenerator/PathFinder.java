@@ -102,7 +102,7 @@ public class PathFinder {
                 Vector2d otherTarget = isLeft ? step.rightMost : step.leftMost;
                 Vector2d leftRightLineDiff = otherTarget.sub(adjustedTarget);
                 Vector2d adjustedEdge = getLineLineIntersection(adjustedLinePointQ, adjustedLineDiff, adjustedTarget, leftRightLineDiff);
-                Vector2d offset = leftRightLineDiff.mag() == 0 ? new Vector2d(0, 0) : leftRightLineDiff.normalize().mult(Ball.radius);
+                Vector2d offset = leftRightLineDiff.mag() == 0 ? new Vector2d(0, 0) : leftRightLineDiff.normalize().mult(Ball.radius + 0.01);
                 adjustedTarget = adjustedEdge.add(offset);
             } else {
                 ArrayList<Vector2d> intersections = getLineCircleIntersections(mainBallPos, mainBallPos.add(adjustedLinePointQ.sub(adjustedLinePointP)), step.posB1, Ball.radius * 2);
@@ -116,7 +116,7 @@ public class PathFinder {
             lineSegStartPoint = mainBallPos.add(perpOffset);
             lineSegEndPoint = adjustedTarget.add(perpOffset);
 
-            if (adjustedTarget.sub(target).mag() > Ball.radius) {
+            if (adjustedTarget.sub(target).mag() > Ball.radius * 2) {
                 return null;
             }
 
