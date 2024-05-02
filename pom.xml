@@ -118,6 +118,59 @@
           <target>21</target>
         </configuration>
       </plugin>
+      <plugin>
+      <!-- Build an executable JAR -->
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>3.1.0</version>
+      <configuration>
+        <archive>
+          <manifest>
+            <addClasspath>true</addClasspath>
+            <classpathPrefix>lib/</classpathPrefix>
+            <mainClass>org.CueCraft.Main</mainClass>
+          </manifest>
+        </archive>
+      </configuration>
+    </plugin>
+            <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.0.0</version>
+            <executions>
+                <execution>
+                    <id>run-makefile</id>
+                    <phase>generate-sources</phase> <!-- Adjust the phase as needed -->
+                    <goals>
+                        <goal>exec</goal>
+                    </goals>
+                    <configuration>
+                        <executable>make</executable>
+                        <arguments>
+                            <argument>-C</argument>
+                            <argument>fastfiz/fastfiz</argument>
+                        </arguments>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.8</version>
+            <executions>
+                <execution>
+                    <phase>package</phase> <!-- Adjust phase according to your needs -->
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                    <configuration>
+                        <target>
+                            <move file="fastfiz/fastfiz/libfastfiz.so" tofile="src/main/resources/lib/libfastfiz.so"/>
+                        </target>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
     </plugins>
   </build>
 </project>
