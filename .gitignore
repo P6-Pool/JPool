@@ -43,5 +43,6 @@ settings.xml
 
 logs
 highlights
+benchmarks
 
 src/main/resources/lib/libfastfiz.so

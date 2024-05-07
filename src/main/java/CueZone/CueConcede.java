@@ -5,7 +5,11 @@ import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
-public class CueConcede implements Agent{
+public class CueConcede extends Agent{
+    public CueConcede() {
+        super(null);
+    }
+
     @Override
     public Triplet<ShotParams, Vector, Decision> getBreakShot() {
         return new Triplet<>(new ShotParams(), new Vector(), Decision.DEC_EIGHTBALL_RERACK_OPP_SHOOT);

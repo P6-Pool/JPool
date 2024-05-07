@@ -12,29 +12,34 @@ import org.javatuples.Triplet;
 
 import java.util.Random;
 
-public class CueCraft implements Agent {
-    String name;
+public class CueCraft extends Agent {
+    CueCraftConfig config;
     ShotEvaluator.ShotDecider shotDecider;
 
-    public CueCraft(String name, double noiseMag, int shotDepth, int numVelocitySamples, int monteCarloDepth, int numMonteCarloSamples) {
-        this.name = name + "-" + shotDepth + "-" + numVelocitySamples + "-" + monteCarloDepth + "-" + numMonteCarloSamples;
+    public CueCraft(CueCraftConfig config) {
+        super(config);
 
-        ShotEvaluator.ShotGenerator shotGenerator = (tableState, pattern) -> ShotGenerator.generateShots(tableState, pattern, shotDepth);
-        ShotEvaluator.ShotParamsGenerator shotParamsGenerator = (tableState, pattern) -> ShotEvaluator.shotVelocitySampling(tableState, pattern, numVelocitySamples, shotGenerator, ShotEvaluator::rewardShotSimple);
-        this.shotDecider = (tableState, pattern) -> ShotEvaluator.monteCarloTreeSearch(tableState, pattern, noiseMag, monteCarloDepth, numMonteCarloSamples, shotParamsGenerator);
+        this.config = config;
+
+        ShotEvaluator.ShotGenerator shotGenerator = (tableState, pattern) -> ShotGenerator.generateShots(tableState, pattern, config.shotDepth);
+        ShotEvaluator.ShotParamsGenerator shotParamsGenerator = (tableState, pattern) -> ShotEvaluator.shotVelocitySampling(tableState, pattern, config.numVelocitySamples, shotGenerator, ShotEvaluator::rewardShotSimple);
+        this.shotDecider = (tableState, pattern) -> ShotEvaluator.monteCarloTreeSearch(tableState, pattern, config.noiseMag, config.monteCarloDepth, config.numMonteCarloSamples, shotParamsGenerator);
     }
 
     @Override
     public String getName() {
-        return "CueCraft-" + name;
+        return "CueCraft-" + config;
     }
 
     @Override
     public Triplet<ShotParams, Vector, Decision> getBreakShot() {
         ShotParams sp = new ShotParams(2.122, 4.795, 21.027, 300.7421, 4.354);
+//        ShotParams sp = new ShotParams(-3.8, 5.3, 24.07, 228.07, 7.4);
         Vector vector = new Vector();
         vector.setX(0.756);
         vector.setY(1.808);
+//        vector.setX(1.01);
+//        vector.setY(1.9);
         return new Triplet<>(sp, vector, Decision.DEC_NO_DECISION);
     }
 

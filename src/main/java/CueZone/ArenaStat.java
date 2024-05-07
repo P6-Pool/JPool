@@ -1,6 +1,7 @@
 package CueZone;
 
 import org.CueCraft.Grpc.Client;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,14 +21,51 @@ public record ArenaStat(
         double avgTimePerGame,
         double arenaTotalTime
 ) {
+    public double getCompletion() {
+        return (double) numGamesPlayed / (double) numTotalGames * 100.0;
+    }
+
+    public double getWinRatePlayer1() {
+        return (double) numWinsPlayer1 / (double) numGamesPlayed * 100.0;
+    }
+
+    public double getWinRatePlayer2() {
+        return (double) numWinsPlayer2 / (double) numGamesPlayed * 100.0;
+    }
+
+    public double getOffBreakWinRatePlayer1() {
+        int offBreakWins = 0;
+        for (GameSummary summary : summaries) {
+            boolean allTurnsBySamePlayer = summary.turnHistory().stream().allMatch((t) -> t.player() == params.player1());
+            boolean gameWonByPocketingEightBall = summary.wonBy() == Game.WinType.WON_BY_POCKETING_EIGHTBALL;
+            if (allTurnsBySamePlayer && gameWonByPocketingEightBall) {
+                offBreakWins++;
+            }
+        }
+        return (double) offBreakWins / (double) numGamesPlayed * 100.0;
+    }
+
+    public double getOffBreakWinRatePlayer2() {
+        int offBreakWins = 0;
+        for (GameSummary summary : summaries) {
+            boolean allTurnsBySamePlayer = summary.turnHistory().stream().allMatch((t) -> t.player() == params.player2());
+            boolean gameWonByPocketingEightBall = summary.wonBy() == Game.WinType.WON_BY_POCKETING_EIGHTBALL;
+            if (allTurnsBySamePlayer && gameWonByPocketingEightBall) {
+                offBreakWins++;
+            }
+        }
+        return (double) offBreakWins / (double) numGamesPlayed * 100.0;
+    }
+
     @Override
     public String toString() {
-        String completion = String.format(Locale.US, "%.2f", (double) numGamesPlayed / (double) numTotalGames * 100.0);
-        String winRatePlayer1 = String.format(Locale.US, "%.2f", (double) numWinsPlayer1 / (double) numGamesPlayed * 100.0);
-        String winRatePlayer2 = String.format(Locale.US, "%.2f", (double) numWinsPlayer2 / (double) numGamesPlayed * 100.0);
+        String completion = String.format(Locale.US, "%.2f", getCompletion());
+        String winRatePlayer1 = String.format(Locale.US, "%.2f", getWinRatePlayer1());
+        String winRatePlayer2 = String.format(Locale.US, "%.2f", getWinRatePlayer2());
+        String offBreakWinRatePlayer1 = String.format(Locale.US, "%.2f", getOffBreakWinRatePlayer1());
+        String offBreakWinRatePlayer2 = String.format(Locale.US, "%.2f", getOffBreakWinRatePlayer2());
         String avgGameTime = String.format(Locale.US, "%.2f", avgTimePerGame);
         String arenaTime = String.format(Locale.US, "%.2f", arenaTotalTime);
-
 
         StringBuilder sb = new StringBuilder();
 
@@ -36,8 +74,8 @@ public record ArenaStat(
 
         // Append basic stats
         sb.append("Number of games played: ").append(numGamesPlayed).append(" of ").append(numTotalGames).append(" (").append(completion).append("%)\n");
-        sb.append("Number of wins for Player 1: ").append(numWinsPlayer1).append(" (").append(winRatePlayer1).append("%)\n");
-        sb.append("Number of wins for Player 2: ").append(numWinsPlayer2).append(" (").append(winRatePlayer2).append("%)\n");
+        sb.append("Number of wins for Player 1: ").append(numWinsPlayer1).append(" (").append(winRatePlayer1).append("% / ").append(offBreakWinRatePlayer1).append("%)\n");
+        sb.append("Number of wins for Player 2: ").append(numWinsPlayer2).append(" (").append(winRatePlayer2).append("% / ").append(offBreakWinRatePlayer2).append("%)\n");
         sb.append("Average time per game: ").append(avgGameTime).append("s\n");
         sb.append("Arena time: ").append(arenaTime).append("s\n\n");
 
@@ -105,7 +143,7 @@ public record ArenaStat(
                 + this.numGamesPlayed() + "-"
                 + this.params().noiseMag();
 
-        logger.log(fileName, this.toString());
+        logger.log(fileName, this.toString(), ".log");
     }
 
     public void saveSerializedSummariesToFile(ArrayList<GameSummary> summaries, String outDirPath) {
@@ -129,10 +167,10 @@ public record ArenaStat(
 
         String fileName = dateStr + "-"
                 + "playlist(" + summaries.size() + ") - "
-                + this.params().player1().getName() + "-"
-                + this.params().player2().getName() + "-"
-                + this.numGamesPlayed() + "-"
-                + this.params().noiseMag();
+                + params.player1().getName() + "-"
+                + params.player2().getName() + "-"
+                + numGamesPlayed + "-"
+                + params.noiseMag();
 
         // Write the bytes to a file
         try {

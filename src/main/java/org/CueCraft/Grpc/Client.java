@@ -1,13 +1,9 @@
 package org.CueCraft.Grpc;
 
-import CueZone.ArenaStat;
-import CueZone.Game;
 import CueZone.GameSummary;
 import CueZone.Turn;
 import JFastfiz.GameShot;
 import JFastfiz.ShotParams;
-import JFastfiz.ShotResult;
-import JFastfiz.TableState;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -20,7 +16,6 @@ import org.CueCraft.protobuf.ShowShotsRequest;
 import org.CueCraft.protobuf.Shot;
 import org.CueCraft.protobuf.ShotType;
 import org.CueCraft.protobuf.Point;
-import org.javatuples.Quartet;
 
 import java.util.ArrayList;
 

@@ -5,16 +5,20 @@ import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
-public interface Agent {
+public abstract class Agent {
+    AgentConfig config;
 
-    Triplet<ShotParams, Vector, Decision> getBreakShot();
+    public Agent(AgentConfig config) {
+        this.config = config;
+    }
 
-    Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> getShot(GameState gameState);
+    public abstract Triplet<ShotParams, Vector, Decision> getBreakShot();
 
-    Pair<Vector, Decision> getBallInHandPlacement(GameState gameState);
+    public abstract Quartet<ShotParams, Ball.Type, Table.Pocket, Decision> getShot(GameState gameState);
 
-    Pair<Vector, Decision> getBallBehindLinePlacement(GameState gameState);
+    public abstract Pair<Vector, Decision> getBallInHandPlacement(GameState gameState);
 
-    String getName();
+    public abstract Pair<Vector, Decision> getBallBehindLinePlacement(GameState gameState);
 
+    public abstract String getName();
 }
