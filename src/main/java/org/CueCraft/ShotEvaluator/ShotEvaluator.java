@@ -71,7 +71,7 @@ public class ShotEvaluator {
         return shotRewards;
     }
 
-    public static Triplet<Double, ShotStep, ShotParams> monteCarloTreeSearch(TableState tableState, Table.PlayerPattern playerPattern, int depth, int numSamples, ShotParamsGenerator shotParamsGenerator) {
+    public static Triplet<Double, ShotStep, ShotParams> monteCarloTreeSearch(TableState tableState, Table.PlayerPattern playerPattern, double noiseMag, int depth, int numSamples, ShotParamsGenerator shotParamsGenerator) {
         ArrayList<Pair<ShotStep, ShotParams>> shots = shotParamsGenerator.generateShotParams(tableState, playerPattern);
 
         if (shots.isEmpty()) {
@@ -89,7 +89,7 @@ public class ShotEvaluator {
                 TableState tableStateCopy = new TableState(tableState);
                 ShotParams noisyParams = new ShotParams(shotParams.getValue1());
                 ShotStep shot = shotParams.getValue0();
-                GaussianNoise noise = new GaussianNoise(0.1);
+                GaussianNoise noise = new GaussianNoise(noiseMag);
                 noise.applyNoise(noisyParams);
 
                 Shot shotEvent;
@@ -103,7 +103,7 @@ public class ShotEvaluator {
                     if (depth == 1) {
                         rating++;
                     } else {
-                        rating += monteCarloTreeSearch(tableState, playerPattern, depth - 1, numSamples, shotParamsGenerator).getValue0();
+                        rating += monteCarloTreeSearch(tableState, playerPattern, noiseMag, depth - 1, numSamples, shotParamsGenerator).getValue0();
                     }
                 }
             }

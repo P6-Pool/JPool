@@ -23,16 +23,18 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Agent player1 = new CueCraft("William", 2, 10, 1, 10);
-        Agent player2 = new CueConcede();
+        double noiseMag = 0.5;
 
-        GameParams params = new GameParams(player1, player2, 0, 0, 0);
-
-        ArenaStat stats = Arena.pvpAsync(params, 100, 10);
-        stats.logToFile("logs");
-
-        ArrayList<GameSummary> topGames = stats.getTopGames(10);
-        stats.saveSerializedSummariesToFile(topGames, "highlights");
+//        Agent player1 = new CueCraft("William", noiseMag, 3, 50, 1, 100);
+//        Agent player2 = new CueConcede();
+//
+//        GameParams params = new GameParams(player1, player2, noiseMag, 0, 0);
+//
+//        ArenaStat stats = Arena.pvpAsync(params, 1000, 10);
+//        stats.logToFile("logs");
+//
+//        ArrayList<GameSummary> topGames = stats.getTopGames(10);
+//        stats.saveSerializedSummariesToFile(topGames, "highlights");
 
 //        ArrayList<Ball> balls = new ArrayList<>(){{
 //            add(new Ball(0, 1, new Vector2d(0.7884,Table.length - 1.86736)));
@@ -49,16 +51,28 @@ public class Main {
 //        ArrayList<Ball> balls = new ArrayList<>(){{
 //            add(new Ball(0, 1, new Vector2d(0.65,Table.length / 2)));
 //            add(new Ball(1, 1, new Vector2d(0.90022,Table.length / 2)));
-//            add(new Ball(9, 1, new Vector2d(1.01170,Table.length / 2 - 0.053)));
+//            add(new Ball(10, 1, new Vector2d(1.01170,Table.length / 2 - 0.053)));
+//        }};
+
+//        ArrayList<Ball> balls = new ArrayList<>(){{
+//            add(new Ball(0, 1, new Vector2d(0.78,Table.length - 2.0)));
+//            add(new Ball(1, 1, new Vector2d(0.95,Table.length - 2.07)));
+//            add(new Ball(10, 1, new Vector2d(0.99,Table.length - 2.19)));
 //        }};
 //
+//        ArrayList<Ball> balls = new ArrayList<>(){{
+//            add(new Ball(0, 1, new Vector2d(0.58,Table.length - 2.0)));
+//            add(new Ball(1, 1, new Vector2d(0.95,Table.length - 2.07)));
+//        }};
+
+
 //        Table t = new Table(balls);
 //
-////        Table t = Table.randomTableState(4, 1);
-//
-//        Client client = new Client("localhost", 50051);
-//        Client client2 = new Client("localhost", 50052);
-//        client.showShots(ShotGenerator.generateShots(t.toTableState(), Table.PlayerPattern.SOLID, 2), t);
-//        client2.showShots(ShotGenerator.generateShots(t.toTableState(), Table.PlayerPattern.SOLID, 2), t);
+        Table t = Table.randomTableState(10, 1);
+
+        Client client = new Client("localhost", 50051);
+        Client client2 = new Client("localhost", 50052);
+        client.showShots(ShotGenerator.generateShots(t.toTableState(), Table.PlayerPattern.SOLID, 2), t);
+        client2.showShots(ShotGenerator.generateShots(t.toTableState(), Table.PlayerPattern.SOLID, 2), t);
     }
 }

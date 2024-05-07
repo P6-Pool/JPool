@@ -16,12 +16,12 @@ public class CueCraft implements Agent {
     String name;
     ShotEvaluator.ShotDecider shotDecider;
 
-    public CueCraft(String name, int shotDepth, int numVelocitySamples, int monteCarloDepth, int numMonteCarloSamples) {
+    public CueCraft(String name, double noiseMag, int shotDepth, int numVelocitySamples, int monteCarloDepth, int numMonteCarloSamples) {
         this.name = name + "-" + shotDepth + "-" + numVelocitySamples + "-" + monteCarloDepth + "-" + numMonteCarloSamples;
 
         ShotEvaluator.ShotGenerator shotGenerator = (tableState, pattern) -> ShotGenerator.generateShots(tableState, pattern, shotDepth);
         ShotEvaluator.ShotParamsGenerator shotParamsGenerator = (tableState, pattern) -> ShotEvaluator.shotVelocitySampling(tableState, pattern, numVelocitySamples, shotGenerator, ShotEvaluator::rewardShotSimple);
-        this.shotDecider = (tableState, pattern) -> ShotEvaluator.monteCarloTreeSearch(tableState, pattern, monteCarloDepth, numMonteCarloSamples, shotParamsGenerator);
+        this.shotDecider = (tableState, pattern) -> ShotEvaluator.monteCarloTreeSearch(tableState, pattern, noiseMag, monteCarloDepth, numMonteCarloSamples, shotParamsGenerator);
     }
 
     @Override
