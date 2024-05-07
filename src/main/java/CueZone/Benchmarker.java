@@ -13,6 +13,9 @@ public class Benchmarker {
             GameParams params = new GameParams(agent, new CueConcede(), noiseMag, 0, 0);
             ArenaStat stat = Arena.pvpAsync(params, numRunsPerConfig, maxConcurrentGames);
             results.add(new Pair<>(agent, stat));
+
+            BenchmarkStat bStat = new BenchmarkStat(noiseMag, numRunsPerConfig, results);
+            bStat.saveSerializedStatsToCSV("benchmarks");
         }
 
         return new BenchmarkStat(noiseMag, numRunsPerConfig, results);
