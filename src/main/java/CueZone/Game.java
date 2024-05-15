@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 public class Game {
     public enum WinType {WON_BY_POCKETING_EIGHTBALL, WON_BY_OPPONENT_POCKETING_EIGHTBALL, WON_BY_OPPONENT_CONCEDING, WON_BY_OPPONENT_TIMING_OUT, WON_BY_OPPONENT_BAD_PARAMS}
+
     GameParams gameParams;
     EightBallState gameState;
     Noise noise;
@@ -94,17 +95,23 @@ public class Game {
     }
 
     public GameShot handleBreak() {
-        shotStopwatch.restart();
-        Triplet<ShotParams, Vector, Decision> sp = activeAgent.getBreakShot();
-        double timeSpent = shotStopwatch.getElapsed();
+        if (gameParams.breakShotsEnabled()) {
+            shotStopwatch.restart();
+            Triplet<ShotParams, Vector, Decision> sp = activeAgent.getBreakShot();
+            double timeSpent = shotStopwatch.getElapsed();
 
-        GameShot gs = new GameShot();
-        gs.setParams(sp.getValue0());
-        gs.setDecision(sp.getValue2());
-        gs.setCue_x(sp.getValue1().getX());
-        gs.setCue_y(sp.getValue1().getY());
-        gs.setTimeSpent(timeSpent);
-        return gs;
+            GameShot gs = new GameShot();
+            gs.setParams(sp.getValue0());
+            gs.setDecision(sp.getValue2());
+            gs.setCue_x(sp.getValue1().getX());
+            gs.setCue_y(sp.getValue1().getY());
+            gs.setTimeSpent(timeSpent);
+            return gs;
+        } else {
+            gameState.tableState().randomize();
+            gameState.setTurnTypeNormal();
+            return handleNormal();
+        }
     }
 
     public GameShot handleNormal() {

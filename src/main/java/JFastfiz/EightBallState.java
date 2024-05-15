@@ -72,6 +72,10 @@ public class EightBallState extends GameState {
     this(fastfizJNI.new_EightBallState__SWIG_4(SWIGTYPE_p_std__istream.getCPtr(is)), true);
   }
 
+  public void setTurnTypeNormal() {
+    fastfizJNI.EightBallState_setTurnTypeNormal(swigCPtr, this);
+  }
+
   public boolean playingSolids() {
     return fastfizJNI.EightBallState_playingSolids(swigCPtr, this);
   }

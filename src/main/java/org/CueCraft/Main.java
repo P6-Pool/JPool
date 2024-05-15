@@ -24,14 +24,14 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        double noiseMag = 0.5;
+        double noiseMag = 0;
 
         ArrayList<CueCraftConfig> benchmarkConfigs = new ArrayList<>();
 
         for (int i = 1; i <= 10; i++) {
             for (int j = 1; j <= 10; j++) {
                 benchmarkConfigs.add(new CueCraftConfig("striker", noiseMag,
-                        2,
+                        3,
                         10 * i,
                         1,
                         20 * j));
@@ -41,11 +41,11 @@ public class Main {
         ArrayList<Agent> agents = new ArrayList<>();
         benchmarkConfigs.forEach((config) -> agents.add(new CueCraft(config)));
 
-        BenchmarkStat stat = Benchmarker.RunOffBreakBenchMark(noiseMag, agents, 100, 10);
+        BenchmarkStat stat = Benchmarker.RunOffBreakBenchMark(noiseMag, agents, true, 100, 10);
         stat.logToFile("benchmarks");
         stat.saveSerializedStatsToCSV("benchmarks");
 
-//        CueCraftConfig config = new CueCraftConfig("striker", noiseMag, 3, 50, 1, 1);
+//        CueCraftConfig config = new CueCraftConfig("striker", noiseMag, 5, 50, 1, 1);
 //
 //        Agent player1 = new CueCraft(config);
 //        Agent player2 = new CueConcede();
