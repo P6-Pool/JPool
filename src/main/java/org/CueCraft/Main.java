@@ -24,7 +24,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        double noiseMag = 0;
+        double noiseMag = 0.5;
 
         ArrayList<CueCraftConfig> benchmarkConfigs = new ArrayList<>();
 
@@ -33,8 +33,8 @@ public class Main {
                 benchmarkConfigs.add(new CueCraftConfig("striker", noiseMag,
                         3,
                         10 * i,
-                        1,
-                        20 * j));
+                        2,
+                        10 * j));
             }
         }
 

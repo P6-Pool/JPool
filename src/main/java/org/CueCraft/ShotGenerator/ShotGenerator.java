@@ -27,12 +27,13 @@ public class ShotGenerator {
                 newShots.addAll(generateBallBoths(table, shot, playerPattern));
                 newShots.addAll(generateKissBalls(table, shot, playerPattern));
                 for (int i = 1; i < depth - shot.depth; i++) {
-                    //TODO remember to not generate rail hots from shots where next is already a rail shot
                     newShots.addAll(generateRailShots(table, shot, playerPattern, i));
                 }
             }
-            doneShots.addAll(getDoneShots(newShots));
-            undoneShots = getUndoneShots(newShots, depth);
+
+            ArrayList<ShotStep> reasonableShots = getReasonableShots(newShots);
+            doneShots.addAll(getDoneShots(reasonableShots));
+            undoneShots = getUndoneShots(reasonableShots, depth);
         }
 
         return doneShots;
@@ -338,6 +339,16 @@ public class ShotGenerator {
         }
 
         return new ShotStep(newType, next, ball.pos, newGhostBallPos, newLeftMost, newRightMost, -1, ball.number, next.depth + 1, next.pocket);
+    }
+
+    private static ArrayList<ShotStep> getReasonableShots(ArrayList<ShotStep> shots) {
+        ArrayList<ShotStep> reasonableShots = new ArrayList<>();
+        for (ShotStep shot : shots) {
+            if (shot.getErrorMargin() > 0.0004) {
+                reasonableShots.add(shot);
+            }
+        }
+        return reasonableShots;
     }
 
     private static ArrayList<ShotStep> getDoneShots(ArrayList<ShotStep> shots) {

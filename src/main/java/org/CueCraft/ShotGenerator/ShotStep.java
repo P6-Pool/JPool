@@ -5,6 +5,7 @@ import org.CueCraft.Pool.Pocket;
 
 public class ShotStep {
     public static int idCounter = 0;
+
     public enum ShotStepType {CUE_STRIKE, POCKET, RAIL, STRIKE, KISS_LEFT, KISS_RIGHT, BALL_BOTH}
 
     public ShotStep(ShotStepType type, ShotStep next, Vector2d posB1, Vector2d ghostBall, Vector2d leftMost, Vector2d rightMost, int b1, int b2, int depth, Pocket.PocketType pocket) {
@@ -85,11 +86,22 @@ public class ShotStep {
         return angle;
     }
 
+    public double getErrorMargin() {
+        if (next != null) {
+            Vector2d leftMostDiff = next.leftMost.sub(posB1);
+            Vector2d rightMostDiff = next.rightMost.sub(posB1);
+
+            return leftMostDiff.angleBetween(rightMostDiff);
+        } else {
+            return Math.PI / 4;
+        }
+    }
+
     public int getPocketedBallNumber() {
         ShotStep curShot = this;
         int number = -1;
 
-        while(curShot.next != null) {
+        while (curShot.next != null) {
             if (curShot.type == ShotStepType.BALL_BOTH) {
                 number = curShot.b2;
             }

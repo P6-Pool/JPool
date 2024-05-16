@@ -103,7 +103,11 @@ public class ShotEvaluator {
                     if (depth == 1) {
                         rating++;
                     } else {
-                        rating += monteCarloTreeSearch(tableState, playerPattern, noiseMag, depth - 1, numSamples, shotParamsGenerator).getValue0();
+                        Triplet<Double, ShotStep, ShotParams> searchResult = monteCarloTreeSearch(tableStateCopy, playerPattern, noiseMag, depth - 1, numSamples, shotParamsGenerator);
+                        if (searchResult == null) {
+                            continue;
+                        }
+                        rating += searchResult.getValue0();
                     }
                 }
             }
